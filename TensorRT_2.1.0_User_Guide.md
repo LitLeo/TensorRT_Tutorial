@@ -2,7 +2,7 @@
 
 ---
 
-[TOC]
+[toc]
 
 ## Introduction
 NVIDIA TensorRT是一个C++库，在NVIDIA GPU上能够实现高性能的推理（inference ）过程。TensorRT优化网络的方式有：（1）合并Tensor和layer，转换weight，选择有效的中间数据格式 and selecting from a large kernel catalog based on layer parameters and measured performance.
@@ -33,7 +33,7 @@ Scale, other than per-channel scaling
 EltWise with more than two inputs
 **Note：** TensorRT不支持caffe的旧prototxt格式的。
 
-##Quick Start Instructions
+## Quick Start Instructions
 PS：这部分是从[TensorRT下载页面][1]翻译过来的。
 TensorRT原名GIE。GIE又名TensorRT 1.0，TensorRT 2.0正式改名。
 TensorRT 2.0非常大的改动点是支持INT8类型（TensorRT 1.0支持FP16）。
