@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TensorRT User Guide</title>
+<link rel="stylesheet" href="https://stackedit.io/res-min/themes/base.css" />
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body><div class="container"><h1 id="tensorrt-user-guide">TensorRT User Guide</h1>
+
+<p><div class="toc">
+<ul>
+<li><a href="#tensorrt-user-guide">TensorRT User Guide</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#getting-started">Getting Started</a><ul>
+<li><a href="#the-network-definition">The Network Definition</a></li>
+</ul>
+</li>
+<li><a href="#samplemnist-simple-usage">SampleMNIST - Simple Usage</a><ul>
+<li><a href="#logging">Logging</a></li>
+<li><a href="#the-build-phase-caffetotensorrtmodel">The Build Phase - caffeToTensorRTModel</a></li>
+<li><a href="#deserializing-the-engine">Deserializing the engine</a></li>
+<li><a href="#the-execution-phase-doinference">The Execution Phase - doInference()</a></li>
+</ul>
+</li>
+<li><a href="#samplegooglenet-profiling-and-16-bit-inference">SampleGoogleNet - Profiling and 16-bit inference</a><ul>
+<li><a href="#profiling">Profiling</a></li>
+<li><a href="#half2-mode">half2 mode</a></li>
+</ul>
+</li>
+<li><a href="#sampleint8-8-bit-calibration-and-inference">SampleINT8 - 8-bit Calibration and Inference</a><ul>
+<li><a href="#the-iint8calibrator-interface">The IInt8Calibrator Interface</a><ul>
+<li><a href="#the-calibration-set">The calibration set</a></li>
+<li><a href="#the-calibration-parameters">The calibration parameters</a></li>
+</ul>
+</li>
+<li><a href="#configuring-the-builder">Configuring the Builder</a></li>
+<li><a href="#calibration-caching">Calibration Caching</a></li>
+<li><a href="#choosing-calibration-parameters">Choosing Calibration Parameters</a></li>
+</ul>
+</li>
+<li><a href="#using-tensorrt-with-multiple-gpus">Using TensorRT with multiple GPUs</a></li>
+<li><a href="#data-formats">Data Formats</a></li>
+<li><a href="#faq">FAQ</a></li>
+</ul>
+</div>
+</p>
+
+
+
+<h1 id="introduction">Introduction</h1>
+
+<p>NVIDIA TensorRT is a C++ library that facilitates high performance inference on NVIDIA GPUs. It takes a network definition and optimizes it by merging tensors and layers, transforming weights, choosing efficient intermediate data formats, and selecting from a large kernel catalog based on layer parameters and measured performance.</p>
+
+<p>This release of TensorRT is built with gcc 4.8.</p>
+
+<p>TensorRT has the following layer types:</p>
+
+<ul>
+<li><strong>Convolution</strong>, with or without bias. Currently only 2D convolutions (i.e. 4D input and output tensors) are supported. <strong>Note</strong>: The operation this layer performs is actually a correlation, which is a consideration if you are formatting weights to import via TensorRT’s API rather than the caffe parser library. </li>
+<li><strong>Activation</strong>: ReLU, tanh and sigmoid.</li>
+<li><strong>Pooling</strong>: max and average.</li>
+<li><strong>Scale</strong>: per-tensor, per channel or per-weight affine transformation and exponentiation by constant values. <strong>Batch Normalization</strong> can be implemented using the Scale layer.</li>
+<li><strong>ElementWise</strong>: sum, product or max of two tensors.</li>
+<li><strong>LRN</strong>: cross-channel only.</li>
+<li><strong>Fully-connected</strong> with or without bias</li>
+<li><strong>SoftMax</strong>: cross-channel only</li>
+<li><strong>Deconvolution</strong>, with and without bias</li>
+</ul>
+
+<p>While TensorRT is independent of any framework, the package includes a parser for caffe models named NvCaffeParser, which provides a simple mechanism for importing network definitions. NvCaffeParser uses the above layers to implement caffe’s Convolution, ReLU, Sigmoid, TanH, Pooling, Power, BatchNorm, Eltwise, LRN,  InnerProduct, SoftMax, Scale, and Deconvolution layers. Caffe features not supported by TensorRT include:</p>
+
+<ul>
+<li>Deconvolution groups</li>
+<li>PReLU</li>
+<li>Scale, other than per-channel scaling</li>
+<li><p>EltWise with more than two inputs</p>
+
+<p><strong>Note:</strong> TensorRT’s caffe parser does not support legacy formats in caffe prototxt - in particular, layer types are expected to be expressed in the prototxt as strings delimited by double quotes.</p></li>
+</ul>
+
+
+
+<h1 id="getting-started">Getting Started</h1>
+
+<p>There are two phases to using TensorRT:</p>
+
+<ul>
+<li>In the <em>build</em> phase, the toolkit takes a network definition, performs optimizations, and generates the inference engine. </li>
+<li>In the <em>execution</em> phase, the engine runs inference tasks using input and output buffers on the GPU.</li>
+</ul>
+
+<p>The build phase can take considerable time, especially when running on embedded platforms. So a typical application will build an engine once, and then serialize it for later use.</p>
+
+<p>The build phase performs the following optimizations on the layer graph:</p>
+
+<ul>
+<li>elimination of layers whose outputs are not used</li>
+<li>fusion of convolution, bias and ReLU operations</li>
+<li>aggregation of operations with sufficiently similar parameters and the same source tensor (for example, the 1x1 convolutions in GoogleNet v5’s inception module)</li>
+<li>elision of concatenation layers by directing layer outputs to the correct eventual destination.</li>
+</ul>
+
+<p>In addition it runs layers on dummy data to select the fastest from its kernel catalog, and performs weight preformatting and memory optimization where appropriate.</p>
+
+
+
+<h2 id="the-network-definition">The Network Definition</h2>
+
+<p>A <em>network definition</em> consists of a sequence of layers, and a set of tensors. </p>
+
+<p>Each <em>layer</em> computes a set of output tensors from a set of input tensors.  Layers have parameters, e.g. convolution size and stride, and convolution filter weights.</p>
+
+<p>A <em>tensor</em> is either an input to the network, or an output of a layer. Tensors have a datatype specifying their precision (16- and 32-bit floats are currently supported) and three dimensions (channels, width, height). The dimensions of an input tensor are defined by the application, and for output tensors they are inferred by the builder.</p>
+
+<p>Each layer and tensor has a name, which can be useful when profiling or reading TensorRT’s build log (see Logging below) </p>
+
+<p>When using the caffe parser, tensor and layer names are taken from the caffe prototxt. </p>
+
+
+
+<h1 id="samplemnist-simple-usage">SampleMNIST - Simple Usage</h1>
+
+<p>The MNIST sample demonstrates typical build and execution phases using a caffe model trained on the MNIST dataset using the <a href="https://github.com/NVIDIA/DIGITS/blob/master/docs/GettingStarted.md">NVIDIA DIGITS tutorial</a>.</p>
+
+
+
+<h2 id="logging">Logging</h2>
+
+<p>TensorRT requires a logging interface to be implemented, through which it reports errors, warnings, and informational messages. </p>
+
+<pre><code>class Logger : public ILogger           
+{
+    void log(Severity severity, const char* msg) override
+    {
+        // suppress info-level messages
+        if (severity != Severity::kINFO)
+            std::cout &lt;&lt; msg &lt;&lt; std::endl;
+    }
+} gLogger;
+</code></pre>
+
+<p>Here we suppress informational messages, and report only warnings and errors.</p>
+
+
+
+<h2 id="the-build-phase-caffetogiemodel">The Build Phase - <code>caffeToGIEModel</code></h2>
+
+<p>First we create the TensorRT builder. The application must implement a logging interface, through which TensorRT will provide information about optimization stages during the build phase, and also warnings and error information. </p>
+
+<pre><code>IBuilder* builder = createInferBuilder(gLogger);
+</code></pre>
+
+<p>Then we create the network definition structure, which we populate from a caffe model using the caffe parser library: </p>
+
+<pre><code>INetworkDefinition* network = infer-&gt;createNetwork();
+CaffeParser* parser = createCaffeParser();
+std::unordered_map&lt;std::string, infer1::Tensor&gt; blobNameToTensor;
+const IBlobNameToTensor* blobNameToTensor = 
+    parser-&gt;parse(locateFile(deployFile).c_str(),
+                             locateFile(modelFile).c_str(),
+                             *network,
+                             DataType::kFLOAT);
+</code></pre>
+
+<p>In this sample, we instruct the parser to generate a network whose weights are 32-bit floats. As well as populating the network definition, the parser returns a dictionary that maps from caffe blob names to TensorRT tensors. </p>
+
+<p><strong>Note:</strong> A TensorRT network definition has no notion of in-place operation - e.g. the input and output tensors of a ReLU are different. When a caffe network uses an in-place operation, the TensorRT tensor returned in the dictionary corresponds to the last write to that blob. For example, if a convolution creates a blob and is followed by an in-place ReLU, that blob’s name will map to the TensorRT tensor which is the output of the ReLU.</p>
+
+<p>Since the caffe model does not tell us which tensors are the outputs of the network, we need to specify these explicitly after parsing:</p>
+
+<pre><code>for (auto&amp; s : outputs)
+    network-&gt;markOutput(*blobNameToTensor-&gt;find(s.c_str()));
+</code></pre>
+
+<p>There is no restriction on the number of output tensors, but marking a tensor as an output may prohibit some optimizations on that tensor.</p>
+
+<p><strong>Note:</strong> at this point we have parsed the caffe model to obtain the network definition, and are ready to create the engine. However, we cannot yet release the parser object because the network definition holds weights by reference into the caffe model, not by value. It is only during the build process that the weights are read from the caffemodel.</p>
+
+<p>We next build the engine from the network definition:</p>
+
+<pre><code>builder-&gt;setMaxBatchSize(maxBatchSize);
+builder-&gt;setMaxWorkspaceSize(1 &lt;&lt; 20);
+ICudaEngine* engine = builder-&gt;buildCudaEngine(*network);
+</code></pre>
+
+<ul>
+<li><code>maxBatchSize</code> is the size for which the engine will be tuned. At execution time, smaller batches may be used, but not larger.  Note that execution of smaller batch sizes may be slower than with a TensorRT engine optimized for that size.</li>
+<li><code>maxWorkspaceSize</code> is the maximum amount of scratch space which the engine may use at runtime</li>
+</ul>
+
+<p>We could use the engine directly, but here we serialize it to a stream, which is the typical usage mode for TensorRT:</p>
+
+<pre><code>engine-&gt;serialize(TensorRTModelStream);
+</code></pre>
+
+<h2 id="deserializing-the-engine">Deserializing the engine</h2>
+
+<p>To deserialize the engine, we create a TensorRT runtime object:</p>
+
+<pre><code>IRuntime* runtime = createInferRuntime(gLogger);
+ICudaEngine* engine = runtime-&gt;deserializeCudaEngine(TensorRTModelStream);
+</code></pre>
+
+<p>We also need to create an execution context. One engine can support multiple contexts, allowing inference to be performed on multiple batches simultaneously while sharing the same weights.</p>
+
+<pre><code>IExecutionContext *context = engine-&gt;createExecutionContext();
+</code></pre>
+
+<p><strong>Note:</strong> Serialized engines are not portable across platforms or TensorRT versions.</p>
+
+
+
+<h2 id="the-execution-phase-doinference">The Execution Phase - <code>doInference()</code></h2>
+
+<p>The input to the engine is an array of pointers to input and output buffers on the GPU (<strong>Note:</strong> All TensorRT inputs and outputs are in contiguous NCHW format.) The engine can be queried for the buffer indices, using the tensor names assigned when the network was created. </p>
+
+<pre><code>int inputIndex = engine-&gt;getBindingIndex(INPUT_BLOB_NAME), 
+    outputIndex = engine-&gt;getBindingIndex(OUTPUT_BLOB_NAME);
+</code></pre>
+
+<p>In a typical production case, TensorRT will execute asynchronously. The <code>enqueue()</code> method will add add kernels to a cuda stream specified by the application, which may then wait on that stream for completion. The fourth parameter to <code>enqueue()</code> is an optional <code>cudaEvent</code> which will be signaled when the input buffers are no longer in use and can be refilled. </p>
+
+<p>In this sample we simply copy the input buffer to the GPU, run inference, then copy the result back and wait on the stream:</p>
+
+<pre><code>cudaMemcpyAsync(&lt;...&gt;, cudaMemcpyHostToDevice, stream);
+context.enqueue(batchSize, buffers, stream, nullptr);
+cudaMemcpyAsync(&lt;...&gt;, cudaMemcpyDeviceToHost, stream);
+cudaStreamSynchronize(stream);
+</code></pre>
+
+<p><strong>Note:</strong> The batch size must be at most the value specified when the engine was created.</p>
+
+
+
+<h1 id="samplegooglenet-profiling-and-16-bit-inference">SampleGoogleNet - Profiling and 16-bit inference</h1>
+
+<p>SampleGoogleNet illustrates layer-based profiling and TensorRT’s half2 mode, which is the fastest mode for batch sizes greater than one on platforms which natively support 16-bit inference . </p>
+
+
+
+<h2 id="profiling">Profiling</h2>
+
+<p>To profile a network, implement the <code>IProfiler</code> interface and add the profiler to the execution context:</p>
+
+<pre><code>context.profiler = &amp;gProfiler;
+</code></pre>
+
+<p>Profiling is not currently supported for asynchronous execution, and so we must use TensorRT’s synchronous <code>execute()</code> method:</p>
+
+<pre><code>for (int i = 0; i &lt; TIMING_ITERATIONS;i++)
+    engine-&gt;execute(context, buffers);
+</code></pre>
+
+<p>After execution has completed, the profiler callback is called once for every layer. The sample accumulates layer times over invocations, and averages the time for each layer at the end. </p>
+
+<p>Observe that the layer names are modified by TensorRT’s layer-combining operations.</p>
+
+
+
+<h2 id="half2-mode">half2 mode</h2>
+
+<p>TensorRT can use 16-bit instead of 32-bit arithmetic and tensors, but this alone may not deliver significant performance benefits. Half2 is an execution mode where internal tensors interleave 16 bits from adjacent pairs of images, and is the fastest mode of operation for batch sizes greater than one.</p>
+
+<p>To use half2 mode, two additional steps are required:</p>
+
+<p>1) create an input network with 16-bit weights, by supplying the <code>DataType::kHALF2</code> parameter to the parser </p>
+
+<pre><code>const IBlobNameToTensor *blobNameToTensor = 
+  parser-&gt;parse(locateFile(deployFile).c_str(),
+                locateFile(modelFile).c_str(),
+                *network,
+                DataType::kHALF);
+</code></pre>
+
+<p>2) set the ‘half2mode’ mode in the builder when building the engine:</p>
+
+<pre><code>builder-&gt;setHalf2Mode(true);
+</code></pre>
+
+
+
+<h1 id="sampleint8-8-bit-calibration-and-inference">SampleINT8 - 8-bit Calibration and Inference</h1>
+
+<p>SampleINT8 illustrates the steps involved when performing inference in 8-bit integer (henceforth denoted by <em>INT8</em>). The sample is accompanied by the MNIST training set, but may also be used to calibrate and score other networks. To run the sample on MNIST, use the command line:</p>
+
+<pre><code>./sample_int8 mnist
+</code></pre>
+
+<p><strong>Note</strong>: INT8 inference is available only on GPUs with compute capability 6.1.</p>
+
+<p>INT8 engines are built from 32-bit network definitions, and require significantly more investment than building a 32-bit or 16-bit engine. In particular the TensorRT builder must <em>calibrate</em> the network to to determine how best to represent the weights and activations as 8-bit integers. This requires a set of representative inputs for the network (the <em>calibration set</em>), and two parameters, the <em>regression cutoff</em> and <em>quantile</em>.   </p>
+
+<p>The application must specify the calibration set and parameters by implementing the <code>IInt8Calibrator</code> interface. For ImageNet networks and MNIST, 500 images is a reasonable size for the calibration set. See <a href="#choosing-calibration-parameters">choosing calibration parameters</a> for more detail on how to determine the cutoff and quantile values.</p>
+
+<h2 id="the-iint8calibrator-interface">The <code>IInt8Calibrator</code> Interface</h2>
+
+<p>The <code>IInt8Calibrator</code> interface has methods for specifying the calibration set and calibration parameters to the builder. In addition, because calibration is an expensive process that may need to run multiple times, it provides methods for caching intermediate values.  Caching is discussed in more detail in <a href="#calibration-caching">calibration caching</a>;  the simplest implementation is simply return immediately from the <code>write()</code> methods, and return <code>nullptr</code> from the <code>read()</code> methods.</p>
+
+
+
+<h3 id="the-calibration-set">The calibration set</h3>
+
+<p>The builder calls <code>getBatchSize()</code> once at the start of calibration to obtain the batch size for the calibration set. Every calibration batch must have this size. The method <code>getBatch()</code> is then called repeatedly to obtain batches from the application, until the method returns false:</p>
+
+<pre><code>bool getBatch(void* bindings[], const char* names[], int nbBindings) override
+{
+    if (!mStream.next())
+        return false;
+
+    CHECK(cudaMemcpy(mDeviceInput, mStream.getBatch(), mInputCount * sizeof(float), cudaMemcpyHostToDevice));
+    assert(!strcmp(names[0], INPUT_BLOB_NAME));
+    bindings[0] = mDeviceInput;
+    return true;
+}
+</code></pre>
+
+<p>For each input tensor, a pointer to input data in GPU memory must be written into the <code>bindings</code> array.  The <code>names</code> array  contains the names of the input tensors, and the position for each tensor in the <code>bindings</code> array matches the position of its name in the <code>names</code> array. Both arrays have size <code>nbBindings</code>.</p>
+
+<p><strong>Note:</strong> The calibration set must be representative of the input provided to GIE at runtime - for example, for image classification networks, it should not consist of images from just a small subset of categories. In addition, any image processing (such as scaling, cropping or mean subtraction) that would occur prior to inference must also be performed prior to calibration. </p>
+
+<h3 id="the-calibration-parameters">The calibration parameters</h3>
+
+<p>These methods are straightforward: </p>
+
+<pre><code>double getQuantile() const override             { return mQuantile; }
+double getRegressionCutoff() const override     { return mCutoff; }
+</code></pre>
+
+
+
+<h2 id="configuring-the-builder">Configuring the Builder</h2>
+
+<p>For INT8 inference, the input model must be specified with 32-bit weights:</p>
+
+<pre><code>const IBlobNameToTensor* blobNameToTensor = 
+    parser-&gt;parse(locateFile(deployFile).c_str(),
+                  locateFile(modelFile).c_str(),
+                   *network,
+                   DataType::kFLOAT);
+</code></pre>
+
+<p>There are two additional methods to call on the builder:</p>
+
+<pre><code>builder-&gt;setInt8Mode(true);
+builder-&gt;setInt8Calibrator(calibrator);
+</code></pre>
+
+<p>Once the network has been built, it can be used just like an FP32 network: inputs and outputs remain in 32-bit floating point.</p>
+
+
+
+<h2 id="calibration-caching">Calibration Caching</h2>
+
+<p>Calibration can be slow, so the <code>IInt8Calibrator</code> interface provides methods for caching intermediate data. Using these methods effectively requires a more detailed understanding of calibration. </p>
+
+<p>When building an INT8 engine, the builder performs the following steps:</p>
+
+<ol>
+<li>build a 32-bit engine, run it on the calibration set, and record a histogram for each tensor of the distribution of activation values. </li>
+<li>build a <em>calibration table</em> from the histograms and the quantile and cutoff parameters.</li>
+<li>build the INT8 engine from the calibration table and the network definition.</li>
+</ol>
+
+<p>Both the histograms and calibration table can be cached. </p>
+
+<p>The calibration table cache is useful when building the same network multiple times (for example, on multiple platforms). It captures data derived from the network, the calibration set, and the cutoff and quantile parameters. The parameters are recorded in the table, and if the cached parameters do not match those specified by the calibrator, the cached table is ignored. However, if the network or calibration set changes, it is the application’s responsibility to invalidate the cache.</p>
+
+<p>The histogram cache is useful when searching the calibration parameter space with the same network and calibration set, since it allows histogram creation to be performed only once. Again, if the network or calibration set changes, it is the application’s responsibility to invalidate the cache.  </p>
+
+<p>The caches are used as follow:</p>
+
+<ul>
+<li>if a calibration table is found, calibration is skipped, otherwise: <br>
+<ul><li>if a histogram cache is found, histogram building is skipped, otherwise <br>
+<ul><li>an FP32 network is constructed and run on the calibration set to build the histograms</li></ul></li>
+<li>then the calibration table is built from the histograms and parameters</li></ul></li>
+<li>then the INT8 network is built from the network definition and the calibration table.</li>
+</ul>
+
+<p>Cached data is passed as a pointer and length, for example:</p>
+
+<pre><code>const void* readHistogramCache(size_t&amp; length) override
+{
+    length = mHistogramCache.size();
+    return length ? &amp;mHistogramCache[0] : nullptr;
+}
+
+void writeHistogramCache(const void* cache, size_t length) override
+{
+    mHistogramCache.clear();
+    std::copy_n(reinterpret_cast&lt;const char*&gt;(cache), length, std::back_inserter(mHistogramCache));
+}
+</code></pre>
+
+
+
+<h2 id="choosing-calibration-parameters">Choosing Calibration Parameters</h2>
+
+<p>The cutoff and quantile parameters take values in the range [0,1]; their meaning is discussed in detail in the accompanying white paper. To find the best calibration parameters, it can be useful to search over the parameter combinations and score the network for each combination using some additional images. <code>searchCalibrations()</code> illustrates how to do this. For ImageNet networks, 5000 images were used to find the optimal calibration. Since the calibration process will run many times varying only the regression and cutoff parameters, histogram caching is strongly recommended.</p>
+
+
+
+<h1 id="giexec-a-command-line-wrapper">giexec - A Command Line Wrapper</h1>
+
+<p>Included in the samples directory is a command line wrapper for TensorRT. It is useful for benchmarking networks on random data, and for generating serialized engines from such models. The command line arguments are as follows</p>
+
+<pre><code>Mandatory params:
+  --deploy=&lt;file&gt;      Caffe deploy file
+  --output=&lt;name&gt;      Output blob name (can be specified multiple times)
+
+Optional params:
+  --model=&lt;file&gt;       Caffe model file (default = no model, random weights used)
+  --batch=N            Set batch size (default = 1)
+  --device=N           Set cuda device to N (default = 0)
+  --iterations=N       Run N iterations (default = 10)
+  --avgRuns=N          Set avgRuns to N - perf is measured as an average of avgRuns (default=10)
+  --workspace=N        Set workspace size in megabytes (default = 16)
+  --half2              Run in paired fp16 mode (default = false)
+  --int8               Run in int8 mode (default = false)
+  --verbose            Use verbose logging (default = false)
+  --hostTime           Measure host time rather than GPU time (default = false)
+  --engine=&lt;file&gt;      Generate a serialized GIE engine
+  --calib=&lt;file&gt;       Read INT8 calibration cache file
+</code></pre>
+
+<p>For example:</p>
+
+<pre><code>giexec --deploy=mnist.prototxt --model=mnist.caffemodel --output=prob
+</code></pre>
+
+<p>If no model is supplied, random weights will be generated.</p>
+
+<p>This sample showcases no additional features of TensorRT beyond those illustrated in the preceding samples.</p>
+
+<h1 id="using-tensorrt-with-multiple-gpus">Using TensorRT with multiple GPUs</h1>
+
+<p>Each <code>ICudaEngine</code> object is bound to a specific GPU when it is instantiated, either by the builder or on deserialization. To select the GPU, use <code>cudaSetDevice()</code> before calling the builder or deserializing the engine. Each <code>IExecutionContext</code> is bound to the same GPU as the engine from which it was created. When calling <code>execute()</code> or <code>enqueue()</code>, ensure that the thread is associated with the correct device by calling <code>cudaSetDevice()</code> if necessary.</p>
+
+
+
+<h1 id="data-formats">Data Formats</h1>
+
+<p>TensorRT network inputs and outputs are 32-bit tensors in contiguous NCHW format.</p>
+
+<p>For weights:</p>
+
+<ul>
+<li>Convolution weights are in contiguous KCRS format, where K indexes over output channels, C over input channels, and R and S over the height and width of the convolution, respectively.</li>
+<li>Fully Connected weights are in contiguous row-major layout</li>
+<li>Deconvolution weights are in contiguous CKRS format (where C, K, R and S are as above).</li>
+</ul>
+
+
+
+<h1 id="faq">FAQ</h1>
+
+<p><strong>Q: How can I use my own layer types in conjunction with TensorRT?</strong> <br>
+A: This release of TensorRT doesn’t support custom layers. To use your own layer in the middle of TensorRT, create two TensorRT pipelines, one to run before your layer and one to run afterwards.</p>
+
+<pre><code>IExecutionContext *contextA = engineA-&gt;createExecutionContext();
+IExecutionContext *contextB = engineB-&gt;createExecutionContext();
+
+&lt;...&gt;
+
+contextA.enqueue(batchSize, buffersA, stream, nullptr);
+myLayer(outputFromA, inputToB, stream);
+contextB.enqueue(batchSize, buffersB, stream, nullptr);
+</code></pre>
+
+<p>The first TensorRT pipeline will read the input and write to <code>outputFromA</code>, and the second will read from <code>inputToB</code> and generate the final output.</p>
+
+<p><strong>Q: How do I create an engine optimized for several possible batch sizes?</strong> <br>
+A: While TensorRT allows an engine optimized for a given batch size to run at any smaller size, the performance for those smaller sizes may not be as well-optimized. To optimize for multiple different batch sizes, run the builder and serialize an engine for each batch size. A future release of TensorRT will be able to optimize a single engine for multiple batch sizes, thereby allowing for sharing of weights where layers at different batch sizes use the same weight formats. </p>
+
+<p><strong>Q: How do I choose the optimal workspace size?</strong> <br>
+A: Some TensorRT algorithms require additional workspace on the GPU. The method <code>IBuilder::setMaxWorkspaceSize()</code> controls the maximum amount of workspace that may be allocated, and will prevent algorithms that require more workspace from being considered by the builder. At runtime, the space is allocated automatically when creating an <code>IExecutionContext</code>. The amount allocated will be no more than is required, even if the amount set in <code>IBuilder::setMaxWorkspaceSize()</code> is much higher. Applications should therefore allow the TensorRT builder as much workspace as they can afford; at runtime TensorRT will allocate no more than this, and typically less.</p></div></body>
+</html>

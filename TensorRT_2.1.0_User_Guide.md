@@ -5,7 +5,7 @@
 [toc]
 
 ## Introduction
-NVIDIA TensorRT是一个C++库，在NVIDIA GPU上能够实现高性能的推理（inference ）过程。TensorRT优化网络的方式有：（1）合并Tensor和layer，转换weight，选择有效的中间数据格式 and selecting from a large kernel catalog based on layer parameters and measured performance.
+NVIDIA TensorRT是一个C++库，在NVIDIA GPU上能够实现高性能的推理（inference ）过程。TensorRT优化网络的方式有：合并Tensor和layer，转换weight，选择有效的中间数据格式和 <font color="red">selecting from a large kernel catalog based on layer parameters and measured performance.</font>
 
 编译TensorRT 2.1.0 要求GCC >= 4.8
 
@@ -78,5 +78,17 @@ build阶段对网络进行了以下优化：
 <font color="red">In addition it runs layers on dummy data to select the fastest from its kernel catalog, and performs weight preformatting and memory optimization where appropriate.</font>
 
 ## The Network Definition
+
+## SampleINT8 - 8-bit Calibration and Inference
+SampleINT8说明了以8 bit整数（INT8）进行推理的步骤。SampleINT8使用MNIST训练集进行验证，但也可用于校准和评分掐网络。使用以下命令在MNIST上运行示例。
+`./sample_int8 mnist`
+**Note**：INT8只有在计算能力6.1的GPU上使用。
+
+INT8 engine的build仍使用32-bit（float）进行网络定义，但是要比32-bit engine和16-bit复杂多。TensorRT在构建网络时，必须校准（calibrate）网络以确定如何最好的用8-bit表示weights和activations。这需要一组代表性的输入数据-校准集（the calibration set）和两个参数， 回归截止和分位数（<font color="red">the regression cutoff and quantile</font>）。
+
+应用程序必须通过实现INT8Calibrator接口来指定校准集合参数。对于ImageNet网络和MNIST，500张图像是校准集的合理大小。下面将讨论如何确定截止值和分位数值的详细信息。
+
+## The IInt8EntropyCalibrator Interface
+
 
   [1]: https://developer.nvidia.com/nvidia-tensorrt-20-download
