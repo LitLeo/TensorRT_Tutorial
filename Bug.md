@@ -2,8 +2,11 @@
 本页面为TensorRT存在的bug or error。
 
 版本：TensorRT 2.0
+
 BUG类别：文档错误
+
 贡献者：[LitLeo][1]
+
 BUG描述：
 TensorRT中Weights的存储方式是col-major的，在文档中却写的是row-major。
 在文档Data Formats章节，原文为
