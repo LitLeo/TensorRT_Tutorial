@@ -7,6 +7,7 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  - TensorRT samples 介绍分析讲解；
  - TensorRT 使用经验。
 
+使用TensorRT者请先阅读《[TensorRT目前存在的BUG][1]》。
 
  感谢每一位为该翻译项目做出贡献的同学.
  
@@ -19,15 +20,15 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  
 ## 参与者（按参与时间排序）
 TensorRT User Guide 翻译
- - [LitLeo][1]
- - [MoyanZitto][2]
+ - [LitLeo][2]
+ - [MoyanZitto][3]
 
 翻译校对
 
  - 赵开勇
 
 TensorRT samples 介绍分析讲解
-- [LitLeo][1]
+- [LitLeo][4]
 
 TensorRT 使用经验。
 
@@ -38,5 +39,8 @@ TensorRT 使用经验。
  
 欲参与者请加QQ群：483063470
 
-  [1]: https://github.com/LitLeo
-  [2]: https://github.com/MoyanZitto
+
+  [1]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
+  [2]: https://github.com/LitLeo
+  [3]: https://github.com/MoyanZitto
+  [4]: https://github.com/LitLeo
