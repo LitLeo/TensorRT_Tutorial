@@ -1,4 +1,4 @@
-# TensorRT 2.1.0 User Guide
+# TensorRT 2.0 User Guide
 
 ---
 
@@ -7,9 +7,9 @@
 ## 介绍
 NVIDIA TensorRT是一个C++库，在NVIDIA GPU上能够实现高性能的推理（inference ）过程。TensorRT优化网络的方式有：对张量和层进行合并，转换权重，选择高效的中间数据格式，以及依据层的参数和实测性能，从一个丰富的核仓库中进行筛选。
 
-编译TensorRT 2.1.0 要求GCC >= 4.8
+编译TensorRT 2.0 要求GCC >= 4.8
 
-TensorRT 2.1.0 现在支持以下layer类型：
+TensorRT 2.0 现在支持以下layer类型：
 
  - **Convolution**：卷积层，可无bias。目前仅支持2D卷积（即对4D的输入进行卷积并输出4D输出）。**Note：**该卷积层的操作实际计算的是“相关”而不是“卷积”（严格的卷积定义需要卷积核反转），如果你想通过TensorRT的API而不是通过caffe parser library导入权重，这是一个需要注意的地方。
  - **Activation**: 激活层，支持ReLU, tanh和sigmoid.
@@ -123,7 +123,7 @@ bool getBatch(void* bindings[], const char* names[], int nbBindings) override
 ```
 对于每个输入张量，指向GPU内存中数据的指针必须被写入`bindings`数组中，而`names`数组包含了输入张量的名字，`names`数组中的名字与`bindings`数组中的指针按位置一一对应。两个数组的大小都是`nbBindings`。
 
-**注意：**校准集必须能够代表在GIE运行时的输入数据。例如，对图像分类任务而言，校准集不能只由来自一部分类别的图片构成。另外，任何在推断前执行的图像处理过程，如缩放、裁剪或去均值，也必须对校准集的样本执行。
+**注意：**校准集必须能够代表在TensorRT运行时的输入数据。例如，对图像分类任务而言，校准集不能只由来自一部分类别的图片构成。另外，任何在推断前执行的图像处理过程，如缩放、裁剪或去均值，也必须对校准集的样本执行。
 
 #### 校准集参数
 这些方法是很明确的：
@@ -234,10 +234,23 @@ TensorRT的输入输出张量均为以NCHW形式存储的32-bit张量。NCHW指�
 对权重而言：
 
 - 卷积核存储为KCRS形式，其中K轴为卷积核数目的维度，即卷积层输出通道维。C轴为是输入张量的通道维。R和S分别是卷积核的高和宽
-- 全连接层按照行主序形式存储
+- 全连接层按照行主序形式存储  <font color="red">这里是错的！！全连接层中weights的存储方式是col-major，详见[Bugs](https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md)</font>
 - 反卷积层按照CKRS形式存储，各维含义同上
 
 ## FAQ
+**Q：如何在TensorRT中使用自定义层？**
+A：当前版本的TensorRT不支持自定义层。要想在TensorRT中使用自定义层，可以创建两个TensorRT工作流，自定义层夹在中间执行。比如：
+
+``` c++
+IExecutionContext *contextA = engineA->createExecutionContext();
+IExecutionContext *contextB = engineB->createExecutionContext();
+
+<...>
+
+contextA.enqueue(batchSize, buffersA, stream, nullptr);
+myLayer(outputFromA, inputToB, stream);
+contextB.enqueue(batchSize, buffersB, stream, nullptr);
+```
 
 **Q：如何构造对若干不同可能的batch size优化了的引擎？**
 A：尽管TensorRT允许在给定的一个batch size下优化模型，并在运行时送入任何小于该batch size的数据，但模型在更小size的数据上的性能可能没有被很好的优化。为了面对不同batch大小优化模型，你应该对每种batch size都运行一下builder和序列化。未来的TensorRT可能能基于单一引擎对多种batch size进行优化，并允许在当不同batch size下层使用相同的权重形式时，共享层的权重。
