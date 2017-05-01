@@ -82,6 +82,16 @@ build阶段对网络进行了以下优化：
 此外，TensorRT在虚拟数据（Dummy Data）上运行层，以在kernel仓库中筛选出运行最快的，并在适当的时候执行权重预格式化和内存优化。
 
 ### 网络定义
+网络定义是由Layers和Tensors组成的。
+
+每一层都一组输入tensor和一组输出tensor，根据层类型和输入tensor来计算输出tensor。不同类型的层具有不同的参数，比如卷积size和stride，以及卷积滤波器权值。
+
+tensor是网络的输入或者输出。tensor的数据目前支持16bit和32bit浮点数和三维（通道，宽，高）。输入tensor的数据大小由程序猿指定，输出tensor的大小自动就算出来了。
+
+每一层和tensor都有一个名字，在分析或者读构建日志时非常有用。
+
+当使用caffe parser时，tensor和层的名字直接从caffe prototxt读取。
+
 
 ## SampleMNIST：简单使用方法
 ### 日志
