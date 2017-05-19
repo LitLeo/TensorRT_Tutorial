@@ -35,9 +35,10 @@ TensorRT 使用经验。
 ## 进度记录
  - 2017-04-27，项目发起，创建GitHub仓库。
 
- 
- 
 欲参与者请加QQ群：483063470
+
+支持捐赠项目
+![支持捐赠](https://raw.githubusercontent.com/LitLeo/blog_pics/master/WeChat_collection.png)
 
 
   [1]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md

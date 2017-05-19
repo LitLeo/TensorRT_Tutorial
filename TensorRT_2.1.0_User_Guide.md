@@ -46,11 +46,12 @@ TensorRT 2.0非常大的改动点是支持INT8类型（TensorRT 1.0支持FP16）
  1. 验证你是否安装了CUDA 8.0 .
  2. 下载TensorRT的deb包
  3. 从TensrRT的deb包安装，命令为：
- ```bash
- sudo dpkg -i nv-tensorrt-repo-ubuntu1404-7-ea-cuda8.0_2.0.1-1_amd64.deb
+
+ ``
+    sudo dpkg -i nv-tensorrt-repo-ubuntu1404-7-ea-cuda8.0_2.0.1-1_amd64.deb
     sudo apt-get update
     sudo apt-get install tensorrt-2
-```
+``
  4. 验证安装:
   ```bash
   dpkg -l | grep tensorrt-2
@@ -73,10 +74,8 @@ TensorRT对Ubuntu系统友好，如果是企业级系统（比如centos）可以
 安装步骤如下：
 
  1. 下载deb安装包，然后解压，一路挑着大文件解压，找到两个头文件NvCaffeParser.h。NvInfer.h和对应的so文件，libnvcaffe_parser.so.2.0.0，libnvinfer.so.2.0.0。
-
- 2.然后安装方式就跟cudnn一样了，*.h上传到CUDA_HOME/include下，lib文件上传到CUDA_HOME/lib64目录下（lib文件记得添加libnvinfer.so和libnvcaffe_parser.so的链接）
-
- 3.安装完毕，如果要在Centos上跑samples，记得要修改一下Makefile
+ 2. 然后安装方式就跟cudnn一样了，*.h上传到CUDA_HOME/include下，lib文件上传到CUDA_HOME/lib64目录下（lib文件记得添加libnvinfer.so和libnvcaffe_parser.so的链接）
+ 3. 安装完毕，如果要在Centos上跑samples，记得要修改一下Makefile
 
 ## 快速开始
 使用TensorRT包括两部步骤（1）打开冰箱；（2）把大象装进去：
