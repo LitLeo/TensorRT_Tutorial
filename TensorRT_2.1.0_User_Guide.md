@@ -40,6 +40,7 @@ TensorRT原名GIE。GIE又名TensorRT 1.0，TensorRT 2.0正式改名。
 TensorRT 2.0非常大的改动点是支持INT8类型（TensorRT 1.0支持FP16）。
 使用TensorRT 2.0的硬件要求：Tesla P4, Tesla P40, GeForce TitanX Pascal, GeForce GTX 1080, DRIVE PX 2 dGPU
 软件要求：CUDA 8.0
+### Ubuntu 下安装方式
 安装命令：
 
  1. 验证你是否安装了CUDA 8.0 .
@@ -61,8 +62,15 @@ TensorRT 2.0非常大的改动点是支持INT8类型（TensorRT 1.0支持FP16）
  4. 你应看到:
   `libnvinfer2 2.0.0-1+cuda amd64 TensorRT runtime libraries`
 
-注意：TensorRT 2.0现在只提供了Ubuntu 14.04和16.04两个版本。对Ubuntu系统友好，如果是企业级系统（比如centos）可以下载下来解压然后手动安装。
-再注意：我Linux学的不好，折腾了一遍，Centos6.x安不上（gcc和libstdc++.so版本问题），建议Centos 7以上
+注意：TensorRT 2.0现在只提供了Ubuntu 14.04和16.04两个版本。
+
+### Centos 7下安装方式
+TensorRT对Ubuntu系统友好，如果是企业级系统（比如centos）可以下载下来解压然后手动安装。
+前提条件：建议Centos 7以上，即gcc 版本要大于4.8，因为TensorRT内使用了大量的c++ 11特性。如果你是大神可以在Centos 6上升级gcc 到4.8并把一些依赖问题搞定。
+安装步骤如下：
+ 1. 下载deb安装包，然后解压，一路挑着大文件解压，找到两个头文件NvCaffeParser.h。NvInfer.h和对应的so文件，libnvcaffe_parser.so.2.0.0，libnvinfer.so.2.0.0。
+ 2.然后安装方式就跟cudnn一样了，*.h上传到CUDA_HOME/include下，lib文件上传到CUDA_HOME/lib64目录下（lib文件记得添加libnvinfer.so和libnvcaffe_parser.so的链接）
+ 3. 安装完毕，如果要在Centos上跑samples，记得要修改一下Makefile
 
 ## 快速开始
 使用TensorRT包括两部步骤（1）打开冰箱；（2）把大象装进去：
