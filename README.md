@@ -38,8 +38,8 @@ TensorRT 使用经验。
 欲参与者请加QQ群：483063470
 
 支持捐赠项目
-![支持捐赠](https://raw.githubusercontent.com/LitLeo/blog_pics/master/WeChat_collection.png)
 
+ <img src="https://raw.githubusercontent.com/LitLeo/blog_pics/master/WeChat_collection.png" width = "200px" height = "200"/>
 
   [1]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
   [2]: https://github.com/LitLeo
