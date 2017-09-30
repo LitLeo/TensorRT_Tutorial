@@ -8,9 +8,9 @@
  - [TensorRT 3 RC][1]和[TensorRT 2.1][2] 下载链接
  - [TensorRT 2.1 官方在线文档][3] 
  - NVIDIA 介绍TensorRT的blog-[Deploying Deep Neural Networks with NVIDIA TensorRT][4]
- - GTC 2017介绍TensorRT 的[PPT][5]，内含INT8 Quantization和Calibration的实现原理。
- - 新增cublas 和 cudnn的INT8 [demo][6]
- - 新增本人在GTC China 2017 Community Corner主题NVIDIA INT8的PPT， [GTC-China-2017-NVIDIA-INT8.pdf][7]
+ - GTC 2017介绍TensorRT 的[PPT][5]和[视频][6]，内含INT8 Quantization和Calibration的实现原理。
+ - 新增cublas 和 cudnn的INT8 [demo][7]
+ - 新增本人在GTC China 2017 Community Corner主题NVIDIA INT8的PPT， [GTC-China-2017-NVIDIA-INT8.pdf][8]
 
 # TensorRT_Tutorial
 
@@ -21,7 +21,7 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  - TensorRT samples 介绍分析讲解；
  - TensorRT 使用经验。
 
-使用TensorRT者请先阅读《[TensorRT目前存在的BUG][8]》。
+使用TensorRT者请先阅读《[TensorRT目前存在的BUG][9]》。
 
  感谢每一位为该翻译项目做出贡献的同学.
  
@@ -34,15 +34,15 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  
 ## 参与者（按参与时间排序）
 TensorRT User Guide 翻译
- - [LitLeo][9]
- - [MoyanZitto][10]
+ - [LitLeo][10]
+ - [MoyanZitto][11]
 
 翻译校对
 
  - 赵开勇
 
 TensorRT samples 介绍分析讲解
-- [LitLeo][11]
+- [LitLeo][12]
 
 TensorRT 使用经验。
 
@@ -58,9 +58,10 @@ TensorRT 使用经验。
   [3]: http://docs.nvidia.com/deeplearning/sdk/tensorrt-user-guide/index.html
   [4]: https://devblogs.nvidia.com/parallelforall/deploying-deep-learning-nvidia-tensorrt/
   [5]: http://on-demand.gputechconf.com/gtc/2017/presentation/s7310-8-bit-inference-with-tensorrt.pdf
-  [6]: https://github.com/LitLeo/TensorRT_Tutorial/tree/master/cublas&cudnn_int8_demo
-  [7]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/GTC-China-2017-NVIDIA-INT8.pdf
-  [8]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
-  [9]: https://github.com/LitLeo
-  [10]: https://github.com/MoyanZitto
-  [11]: https://github.com/LitLeo
+  [6]: http://on-demand.gputechconf.com/gtc/2017/video/s7310-szymon-migacz-8-bit-inference-with-tensorrt.mp4
+  [7]: https://github.com/LitLeo/TensorRT_Tutorial/tree/master/cublas&cudnn_int8_demo
+  [8]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/GTC-China-2017-NVIDIA-INT8.pdf
+  [9]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
+  [10]: https://github.com/LitLeo
+  [11]: https://github.com/MoyanZitto
+  [12]: https://github.com/LitLeo
