@@ -1,4 +1,9 @@
+## 进度记录
+ - 2017-04-27 项目发起，创建GitHub仓库。
+ - 2017-09-30 TensorRT 3发布，整理一下目前的 资源。
 # TensorRT_Tutorial
+
+-----
 
 TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）过程。最近，NVIDIA发布了TensorRT 2.0 Early Access版本，重大更改就是支持INT8类型。在当今DL大行其道的时代，INT8在缩小模型大小、加速运行速度方面具有非常大的优势。Google新发布的TPU就采用了8-bit的数据类型。
 
@@ -31,9 +36,6 @@ TensorRT samples 介绍分析讲解
 - [LitLeo][4]
 
 TensorRT 使用经验。
-
-## 进度记录
- - 2017-04-27，项目发起，创建GitHub仓库。
 
 欲参与者请加QQ群：483063470
 
