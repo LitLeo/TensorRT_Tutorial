@@ -2,6 +2,7 @@
 ## 进度记录
  - 2017-04-27 项目发起，创建GitHub仓库。
  - 2017-09-30 TensorRT 3最近发布，整理一下目前的资源。
+ - 2017-10-18 增加博客-使用TensorRT实现leaky relu层
 
 ----
 ## 资源整理
@@ -11,6 +12,10 @@
  - GTC 2017介绍TensorRT 的[PPT][5]和[视频][6]，内含INT8 Quantization和Calibration的实现原理。
  - 新增cublas 和 cudnn的INT8 [demo][7]
  - 新增本人在GTC China 2017 Community Corner主题NVIDIA INT8的PPT， [GTC-China-2017-NVIDIA-INT8.pdf][8]
+ 
+---
+## 博客
+ - [使用TensorRT实现leaky relu层][9]
 
 # TensorRT_Tutorial
 
@@ -21,7 +26,7 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  - TensorRT samples 介绍分析讲解；
  - TensorRT 使用经验。
 
-使用TensorRT者请先阅读《[TensorRT目前存在的BUG][9]》。
+使用TensorRT者请先阅读《[TensorRT目前存在的BUG][10]》。
 
  感谢每一位为该翻译项目做出贡献的同学.
  
@@ -34,15 +39,15 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  
 ## 参与者（按参与时间排序）
 TensorRT User Guide 翻译
- - [LitLeo][10]
- - [MoyanZitto][11]
+ - [LitLeo][11]
+ - [MoyanZitto][12]
 
 翻译校对
 
  - 赵开勇
 
 TensorRT samples 介绍分析讲解
-- [LitLeo][12]
+- [LitLeo][13]
 
 TensorRT 使用经验。
 
@@ -61,7 +66,8 @@ TensorRT 使用经验。
   [6]: http://on-demand.gputechconf.com/gtc/2017/video/s7310-szymon-migacz-8-bit-inference-with-tensorrt.mp4
   [7]: https://github.com/LitLeo/TensorRT_Tutorial/tree/master/cublas&cudnn_int8_demo
   [8]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/GTC-China-2017-NVIDIA-INT8.pdf
-  [9]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
-  [10]: https://github.com/LitLeo
-  [11]: https://github.com/MoyanZitto
-  [12]: https://github.com/LitLeo
+  [9]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/leaky_relu.md
+  [10]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
+  [11]: https://github.com/LitLeo
+  [12]: https://github.com/MoyanZitto
+  [13]: https://github.com/LitLeo
