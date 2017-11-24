@@ -19,6 +19,7 @@
 ---
 ## 博客
  - [使用TensorRT实现leaky relu层][10]
+ - [TensorRT Plugin使用方式简介-以leaky relu层为例][11]
 
 # TensorRT_Tutorial
 
@@ -29,7 +30,7 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  - TensorRT samples 介绍分析讲解；
  - TensorRT 使用经验。
 
-使用TensorRT者请先阅读《[TensorRT目前存在的BUG][11]》。
+使用TensorRT者请先阅读《[TensorRT目前存在的BUG][12]》。
 
  感谢每一位为该翻译项目做出贡献的同学.
  
@@ -42,15 +43,15 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  
 ## 参与者（按参与时间排序）
 TensorRT User Guide 翻译
- - [LitLeo][12]
- - [MoyanZitto][13]
+ - [LitLeo][13]
+ - [MoyanZitto][14]
 
 翻译校对
 
  - 赵开勇
 
 TensorRT samples 介绍分析讲解
-- [LitLeo][14]
+- [LitLeo][15]
 
 TensorRT 使用经验。
 
@@ -70,8 +71,9 @@ TensorRT 使用经验。
   [7]: https://github.com/LitLeo/TensorRT_Tutorial/tree/master/cublas&cudnn_int8_demo
   [8]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/GTC-China-2017-NVIDIA-INT8.pdf
   [9]: https://github.com/google/gemmlowp
-  [10]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/leaky_relu.md
-  [11]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
-  [12]: https://github.com/LitLeo
-  [13]: https://github.com/MoyanZitto
-  [14]: https://github.com/LitLeo
+  [10]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/blogs/%E4%BD%BF%E7%94%A8TensorRT%E5%AE%9E%E7%8E%B0leaky%20relu%E5%B1%82.md
+  [11]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/blogs/TensorRT%20Plugin%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F%E7%AE%80%E4%BB%8B-%E4%BB%A5leaky%20relu%E5%B1%82%E4%B8%BA%E4%BE%8B.md
+  [12]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
+  [13]: https://github.com/LitLeo
+  [14]: https://github.com/MoyanZitto
+  [15]: https://github.com/LitLeo
