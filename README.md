@@ -3,7 +3,8 @@
  - 2017-04-27 项目发起，创建GitHub仓库。
  - 2017-09-30 TensorRT 3最近发布，整理一下目前的资源。
  - 2017-10-18 增加博客-使用TensorRT实现leaky relu层
- - 2017-11-11 资源：新增google的INT8开源库。
+ - 2017-11-11 资源：新增google的INT8开源库
+ - 2017-11-25 增加博客-TensorRT Plugin使用方式简介-以leaky relu层为例
 
 ----
 ## 资源整理
