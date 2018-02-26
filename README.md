@@ -15,12 +15,12 @@
  - 新增cublas 和 cudnn的INT8 [demo][7]
  - 新增本人在GTC China 2017 Community Corner主题NVIDIA INT8的PPT， [GTC-China-2017-NVIDIA-INT8.pdf][8]
  - 新增google的INT8开源库[gemmlowp][9]，目前支持ARM和CPU优化
+ - “子棐之GPGPU”公众号所写的《TensorRT系列》博客，从入门篇到INT8篇再到FP16篇最后收尾于Custom Layer篇，内容逻辑清楚，干货满满，自愧不如。附四篇博客链接：[TensorRT 系列之入门篇][10]，[TensorRT系列之INT8篇][11]，[TensorRT系列之FP16篇][12]，[TensorRT系列之Custom Layer篇][13]。
 
- 
 ---
 ## 博客
- - [使用TensorRT实现leaky relu层][10]
- - [TensorRT Plugin使用方式简介-以leaky relu层为例][11]
+ - [使用TensorRT实现leaky relu层][14]
+ - [TensorRT Plugin使用方式简介-以leaky relu层为例][15]
 
 # TensorRT_Tutorial
 
@@ -31,7 +31,7 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  - TensorRT samples 介绍分析讲解；
  - TensorRT 使用经验。
 
-使用TensorRT者请先阅读《[TensorRT目前存在的BUG][12]》。
+使用TensorRT者请先阅读《[TensorRT目前存在的BUG][16]》。
 
  感谢每一位为该翻译项目做出贡献的同学.
  
@@ -44,15 +44,15 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  
 ## 参与者（按参与时间排序）
 TensorRT User Guide 翻译
- - [LitLeo][13]
- - [MoyanZitto][14]
+ - [LitLeo][17]
+ - [MoyanZitto][18]
 
 翻译校对
 
  - 赵开勇
 
 TensorRT samples 介绍分析讲解
-- [LitLeo][15]
+- [LitLeo][19]
 
 TensorRT 使用经验。
 
@@ -72,9 +72,13 @@ TensorRT 使用经验。
   [7]: https://github.com/LitLeo/TensorRT_Tutorial/tree/master/cublas&cudnn_int8_demo
   [8]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/GTC-China-2017-NVIDIA-INT8.pdf
   [9]: https://github.com/google/gemmlowp
-  [10]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/blogs/%E4%BD%BF%E7%94%A8TensorRT%E5%AE%9E%E7%8E%B0leaky%20relu%E5%B1%82.md
-  [11]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/blogs/TensorRT%20Plugin%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F%E7%AE%80%E4%BB%8B-%E4%BB%A5leaky%20relu%E5%B1%82%E4%B8%BA%E4%BE%8B.md
-  [12]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
-  [13]: https://github.com/LitLeo
-  [14]: https://github.com/MoyanZitto
-  [15]: https://github.com/LitLeo
+  [10]: https://mp.weixin.qq.com/s/E5qbMsuc7UBnNmYBzq__5Q
+  [11]: https://mp.weixin.qq.com/s/wyqxUlXxgA9Eaxf0AlAVzg
+  [12]: https://mp.weixin.qq.com/s/nuEVZlS6JfqRQo30S0W-Ww?scene=25#wechat_redirect
+  [13]: https://mp.weixin.qq.com/s/xabDoauJc16z3-gpyre8zA
+  [14]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/blogs/%E4%BD%BF%E7%94%A8TensorRT%E5%AE%9E%E7%8E%B0leaky%20relu%E5%B1%82.md
+  [15]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/blogs/TensorRT%20Plugin%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F%E7%AE%80%E4%BB%8B-%E4%BB%A5leaky%20relu%E5%B1%82%E4%B8%BA%E4%BE%8B.md
+  [16]: https://github.com/LitLeo/TensorRT_Tutorial/blob/master/Bug.md
+  [17]: https://github.com/LitLeo
+  [18]: https://github.com/MoyanZitto
+  [19]: https://github.com/LitLeo
