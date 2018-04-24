@@ -61,13 +61,16 @@ class LeakyReluPlugin : public IPlugin
 {
 public:
     LeakyReluPlugin() {}
+    LeakyReluPlugin(const void* buffer, size_t size)
+    {
+        assert(size == sizeof(mSize));
+        mSize = *reinterpret_cast<const size_t*>(buffer);
+    }
 
-    // 输出个数为1
     int getNbOutputs() const override
     {
         return 1;
     }
-    // getOutputDimensions()=输入维度
     Dims getOutputDimensions(int index, const Dims* inputs, int nbInputDims) override
     {
         assert(nbInputDims == 1);
@@ -84,14 +87,13 @@ public:
     void terminate() override
     {
     }
-    
-    // 不需要额外的内存空间
+
     size_t getWorkspaceSize(int) const override
     {
         return 0;
     }
 
-    // 执行_leakyReluKer核函数
+    // currently it is not possible for a plugin to execute "in place". Therefore we memcpy the data from the input to the output buffer
     int enqueue(int batchSize, const void*const *inputs, void** outputs, void*, cudaStream_t stream) override
     {
         int block_size = 256;
@@ -102,14 +104,12 @@ public:
         getLastCudaError("_leakyReluKer");
         return 0;
     }
-    
-    // 只有一个成员变量
+
     size_t getSerializationSize() override
     {
         return sizeof(mSize);
     }
-    
-    // 把成员变量写入到buffer中，顺序自定义，但要与反序列化时一致。 
+
     void serialize(void* buffer) override
     {
         *reinterpret_cast<size_t*>(buffer) = mSize;
@@ -121,7 +121,6 @@ public:
     }
 
 protected:
-    // 所需成员变量：该层的总大小，因为拿不到输入维度的大小。
     size_t mSize;
 };
 ```
