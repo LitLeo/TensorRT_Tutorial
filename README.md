@@ -5,6 +5,7 @@
  - 2017-10-18 增加博客-使用TensorRT实现leaky relu层
  - 2017-11-11 资源：新增google的INT8开源库
  - 2017-11-25 增加博客-TensorRT Plugin使用方式简介-以leaky relu层为例
+ - 2020-8-31 增加博客《TensorRT Github 开源部分介绍》
 
 ----
 ## 资源整理
@@ -31,8 +32,6 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
  - TensorRT User Guide 翻译；
  - TensorRT samples 介绍分析讲解；
  - TensorRT 使用经验。
-
-使用TensorRT者请先阅读《[TensorRT目前存在的BUG][17]》。
 
  感谢每一位为该翻译项目做出贡献的同学.
  
@@ -63,6 +62,20 @@ TensorRT 使用经验。
 
  <img src="https://raw.githubusercontent.com/LitLeo/blog_pics/master/WeChat_collection.png" width = "200px" height = "200"/>
 
+## 招实习生
+【实习】【腾讯北京AILAB】招募AI异构加速实习生  
+简历直接给负责人，给简历保证迅速反馈。  
+基本条件: 熟悉c++，至少实习6个月  
+工作内容：
+1. 使用c++复现框架训练的模型并进行CPU、GPU、ARM加速，达到上线的性能要求。
+2. 调研各种inference框架并投入生产
+加分项：
+1. 写过或者维护过深度学习框架代码； 
+2. 会CUDA 开发，能自己写kernel，会用cublas，cudnn等库； 
+3. linux cpu c++编程能力，会写avx、会用mkl；
+4. 熟悉深度学习计算过程
+5. 学习能力强，实习时间长
+联系方式: leowgyang@tencent.com
 
   [1]: https://developer.nvidia.com/nvidia-tensorrt3rc-download
   [2]: https://developer.nvidia.com/nvidia-tensorrt-download
