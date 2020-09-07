@@ -6,6 +6,7 @@
  - 2017-11-11 资源：新增google的INT8开源库
  - 2017-11-25 增加博客-TensorRT Plugin使用方式简介-以leaky relu层为例
  - 2020-8-31 增加博客《TensorRT Github 开源部分介绍》
+ - 2020-9-7 增加博客《TensorRT 可借鉴代码汇总》
 
 ----
 ## 资源整理
