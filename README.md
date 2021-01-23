@@ -2,6 +2,7 @@
  - [《TensorRT Tutorial（一）如何选择TensorRT版本》][21]
  - [《TensorRT Tutorial（二）编译 TensorRT 的开源源码》][22]
  - [《TensorRT Tutorial（3.1）讲解 TensorRT 文档-基本使用》][23]
+ - [《TensorRT Tutorial（3.2）讲解 TensorRT 文档-TRT可借鉴的代码样例》][24]
  - 视频版资料见目录-视频版资料
 
 
@@ -108,4 +109,5 @@ TensorRT 使用经验。
   [21]: https://www.bilibili.com/video/BV1Nf4y1v7sa/
   [22]: https://www.bilibili.com/video/BV1x5411n76K/
   [23]: https://www.bilibili.com/video/BV19V411t7LV/
+  [24]: https://www.bilibili.com/video/BV1DT4y1A7Rx/
 
