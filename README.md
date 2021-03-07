@@ -1,3 +1,10 @@
+## 最新视频版本
+ - [《TensorRT Tutorial（一）如何选择TensorRT版本》][21]
+ - [《TensorRT Tutorial（二）编译 TensorRT 的开源源码》][22]
+ - [《TensorRT Tutorial（3.1）讲解 TensorRT 文档-基本使用》][23]
+ - [《TensorRT Tutorial（3.2）讲解 TensorRT 文档-TRT可借鉴的代码样例》][24]
+ - 视频版资料见目录-视频版资料
+
 
 ## 进度记录
  - 2017-04-27 项目发起，创建GitHub仓库。
@@ -8,13 +15,7 @@
  - 2020-8-31 增加博客《TensorRT Github 开源部分介绍》
  - 2020-9-7 增加博客《TensorRT 可借鉴代码汇总》
 
---------------分割线------------
 ----
-## 视频版本
- - [《TensorRT Tutorial（一）如何选择TensorRT版本》][21]
- - [《TensorRT Tutorial（二）编译 TensorRT 的开源源码》][22]
- - [《TensorRT Tutorial（3.1）讲解 TensorRT 文档-基本使用》][23]
- - 视频版资料见目录-视频版资料
 
 ## 资源整理
  - [TensorRT 3 RC][1]和[TensorRT 2.1][2] 下载链接
@@ -108,4 +109,5 @@ TensorRT 使用经验。
   [21]: https://www.bilibili.com/video/BV1Nf4y1v7sa/
   [22]: https://www.bilibili.com/video/BV1x5411n76K/
   [23]: https://www.bilibili.com/video/BV19V411t7LV/
+  [24]: https://www.bilibili.com/video/BV1DT4y1A7Rx/
 
