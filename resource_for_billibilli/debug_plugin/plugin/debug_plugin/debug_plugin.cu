@@ -6,16 +6,13 @@
 
 #include "NvInfer.h"
 
-#include "common.h"
-#include "plugin_math.h"
-#include "serialize.hpp"
 #include "debug_kernel.h"
+#include "serialize.hpp"
 
 using namespace nvinfer1;
 using namespace std;
 
-BEGIN_LIB_NAMESPACE {
-BEGIN_PLUGIN_NAMESPACE {
+namespace debug_plugin {
 
 // Clip plugin specific constants
 namespace
@@ -87,7 +84,7 @@ int DebugPlugin::enqueue(int batchSize, const void* const* inputs, void** output
 
   for (size_t n = 0; n < num_inputs_; n++) {
     auto dims = outputs_dims_[n];
-    const int inputVolume = common::Volume(dims) * batchSize;
+    const int inputVolume = volume(dims) * batchSize;
     // remove dim = 1 or 0
     vector<int> v_dims;
     v_dims.push_back(batchSize);
@@ -103,7 +100,7 @@ int DebugPlugin::enqueue(int batchSize, const void* const* inputs, void** output
 
         cudaMemcpy(arr, input, inputVolume*sizeof(float), cudaMemcpyDeviceToHost);
         printf("layer_name=%s, dims=%s\n", 
-               layer_name_.c_str(), common::Dims2String(dims).c_str());
+               layer_name_.c_str(), dims2String(dims).c_str());
 
         p(arr, v_dims);
         delete [] arr;
@@ -240,6 +237,5 @@ const char* DebugPluginCreator::getPluginNamespace() const {
   return namespace_.c_str();
 }
 
-} // BEGIN_PLUGIN_NAMESPACE
-} // BEGIN_LIB_NAMESPACE
+} // debug_plugin
 

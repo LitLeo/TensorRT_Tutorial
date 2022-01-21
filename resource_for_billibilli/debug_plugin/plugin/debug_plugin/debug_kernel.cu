@@ -4,8 +4,7 @@
 using namespace nvinfer1;
 using namespace std;
 
-BEGIN_LIB_NAMESPACE {
-BEGIN_PLUGIN_NAMESPACE {
+namespace debug_plugin {
 
 template<class T>
 void p_row(const T *row_ptr, int row, int width, int h, bool fold, int t)
@@ -222,6 +221,5 @@ void p_sum(const float *data, std::vector<int>& dims, string message) {
 }
 
 
-} // BEGIN_PLUGIN_NAMESPACE
-} // BEGIN_LIB_NAMESPACE
+} // debug_plugin
 

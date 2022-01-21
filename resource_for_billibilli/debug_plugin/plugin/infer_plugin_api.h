@@ -9,7 +9,7 @@
 //! This is the API for the TRT_DIY plugins.
 //!
 
-namespace my_plugin {
+namespace debug_plugin {
 
 extern "C"
 {
@@ -20,6 +20,6 @@ extern "C"
 
 }
 
-} // 
+} //
 
 #endif // INFER_PLUGIN_API_H_

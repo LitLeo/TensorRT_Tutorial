@@ -6,10 +6,9 @@
 
 #include "NvInfer.h"
 
-#include "common.h"
+#include "plugin_common.h"
 
-BEGIN_LIB_NAMESPACE {
-BEGIN_PLUGIN_NAMESPACE {
+namespace debug_plugin {
 
 class DebugPluginDynamic : public nvinfer1::IPluginV2DynamicExt {
  public:
@@ -84,7 +83,6 @@ class DebugPluginDynamicCreator : public nvinfer1::IPluginCreator {
   std::string namespace_;
 };
 
-} // BEGIN_PLUGIN_NAMESPACE
-} // BEGIN_LIB_NAMESPACE
+} // debug_plugin
 
 #endif // PLUGIN_DEBUG_PLUGIN_H

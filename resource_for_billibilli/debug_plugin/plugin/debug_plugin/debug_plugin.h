@@ -7,10 +7,9 @@
 #include <string>
 #include <vector>
 
-#include "common.h"
+#include "plugin_common.h"
 
-BEGIN_LIB_NAMESPACE {
-BEGIN_PLUGIN_NAMESPACE {
+namespace debug_plugin {
 
 class DebugPlugin : public nvinfer1::IPluginV2IOExt {
  public:
@@ -80,7 +79,6 @@ class DebugPluginCreator: public nvinfer1::IPluginCreator {
   nvinfer1::PluginFieldCollection field_collection_{0, nullptr};
 };
 
-} // BEGIN_PLUGIN_NAMESPACE
-} // BEGIN_LIB_NAMESPACE
+} // debug_plugin
 
 #endif // PLUGIN_DEBUG_PLUGIN_H_

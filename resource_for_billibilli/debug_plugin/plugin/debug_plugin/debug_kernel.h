@@ -7,17 +7,14 @@
 #include <cuda_runtime.h>
 #include <cub/cub.cuh>
 
-#include "common.h"
 #include "plugin_common.h"
 
-BEGIN_LIB_NAMESPACE {
-BEGIN_PLUGIN_NAMESPACE {
+namespace debug_plugin {
 
 void p(const float *data, std::vector<int>& dims);
 
 void p_sum(const float *data, std::vector<int>& dims, std::string message);
 
-} // BEGIN_PLUGIN_NAMESPACE
-} // BEGIN_LIB_NAMESPACE
+} // debug_plugin
 
 #endif // PLUGIN_DEBUG_KERNEL_H_

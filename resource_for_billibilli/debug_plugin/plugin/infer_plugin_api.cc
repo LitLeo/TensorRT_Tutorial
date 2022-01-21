@@ -2,13 +2,12 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <iostream>
 #include <memory>
 #include <unordered_map>
 
 #include "NvInfer.h"
-
-#include "util.h"
 
 #include "debug_plugin/debug_dynamic_plugin.h"
 #include "debug_plugin/debug_plugin.h"
@@ -16,8 +15,7 @@
 using namespace nvinfer1;
 using namespace std;
 
-BEGIN_LIB_NAMESPACE {
-BEGIN_PLUGIN_NAMESPACE {
+namespace debug_plugin {
 
 ILogger* mLogger{};
 
@@ -36,14 +34,15 @@ nvinfer1::IPluginV2* createPluginInternal(const char *layer_name, const string p
                                           map<string, const nvinfer1::Weights> weights) {
   // step1: get creator
   auto it = gPluginRegistry.find(plugin_name);
-  if (it == gPluginRegistry.end())
-    FLOG("Can not find plugin creator by plugin_name: %s", plugin_name.c_str());
+  if (it == gPluginRegistry.end()) {
+    printf("Can not find plugin creator by plugin_name: %s", plugin_name.c_str());
+    return nullptr;
+  }
 
   auto creator = gPluginRegistry[plugin_name];
 
   // step2: prepare parms and weights
   int fcs_num = params.size() + weights.size();
-  CHECK(fcs_num > 0, "Error! fcs_num == 0")
 
   std::vector<PluginField> fcs(fcs_num);
 
@@ -119,6 +118,6 @@ bool initLibDiyInferPlugins(void* logger, const char* libNamespace)
 
   return true;
 }
+
 } // extern "C"
 
-} // 

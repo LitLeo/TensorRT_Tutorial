@@ -13,8 +13,7 @@
 using namespace nvinfer1;
 using namespace std;
 
-BEGIN_LIB_NAMESPACE {
-BEGIN_PLUGIN_NAMESPACE {
+namespace debug_plugin {
 
 namespace
 {
@@ -86,7 +85,7 @@ int DebugPluginDynamic::enqueue(const nvinfer1::PluginTensorDesc* inputDesc,
     cudaStream_t stream)
 {
   for (size_t n = 0; n < num_inputs_; n++) {
-    const int inputVolume = common::Volume(inputDesc[n].dims);
+    const int inputVolume = volume(inputDesc[n].dims);
     // remove dim = 1 or 0
     vector<int> v_dims;
     for (int i = 0; i < inputDesc[n].dims.nbDims; i++) {
@@ -107,7 +106,7 @@ int DebugPluginDynamic::enqueue(const nvinfer1::PluginTensorDesc* inputDesc,
 
         cudaMemcpy(arr, input, inputVolume*sizeof(float), cudaMemcpyDeviceToHost);
         printf("layer_name=%s, dims=%s\n", 
-               layer_name_.c_str(), common::Dims2String(inputDesc[n].dims).c_str());
+               layer_name_.c_str(), dims2String(inputDesc[n].dims).c_str());
 
         p_sum(arr, v_dims, layer_name_);
         p(arr, v_dims);
@@ -252,6 +251,5 @@ const char* DebugPluginDynamicCreator::getPluginNamespace() const
   return namespace_.c_str();
 }
 
-} // BEGIN_PLUGIN_NAMESPACE
-} // BEGIN_LIB_NAMESPACE
+} // debug_plugin
 
