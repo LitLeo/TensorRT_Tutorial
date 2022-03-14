@@ -5,6 +5,8 @@
  - [《TensorRT Tutorial（3.2）讲解 TensorRT 文档-TRT可借鉴的代码样例》][24]
  - [《TensorRT Tutorial（3.3.1）plugin 例子和原理》][25]
  - [《TensorRT Tutorial（3.3.2）如何打造自己的plugin库》][26]
+ - [《TensorRT plugin 16 加速经验》][27]
+
  - 视频版资料见目录-视频版资料
 
 ## 进度记录
@@ -113,4 +115,5 @@ TensorRT 使用经验。
   [24]: https://www.bilibili.com/video/BV1DT4y1A7Rx/
   [25]: https://www.bilibili.com/video/BV1op4y1p7bj/
   [26]: https://www.bilibili.com/video/BV1Qi4y1N7YS/
+  [27]: https://www.bilibili.com/video/BV19Y411g7YY/
 
