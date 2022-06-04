@@ -49,15 +49,25 @@ The capital of France, versailles, contains the Eiffel Tower.
 
 ## 三 作业内容
 ### 1. 学习 使用trt python api 搭建网络
-填充trt_helper.py 中的空白函数。学习使用api 搭建网络的过程。
+填充trt_helper.py 中的空白函数（addLinear， addSoftmax等）。学习使用api 搭建网络的过程。
+
 ### 2. 编写plugin
 trt不支持layer_norm算子，编写layer_norm plugin，并将算子添加到网络中，进行验证。
-### 3. 观察GELU算子的优化过程
-GELU算子使用一堆基础算子堆叠实现的（详细见trt_helper.py addGELU函数），直观上感觉很分散，计算量比较大。  
-但在实际build过程中，这些算子会被合并成一个算子。build 过程中需要设置log为trt.Logger.VERBOSE，观察build过程。
-### 4. 进行 fp16 加速
+1. 及格：将 “基础款LayerNormPlugin.zip”中实现的基础版 layer_norm算子 插入到 trt_helper.py addLayerNorm函数中。
+2. 优秀：将整个layer_norm算子实现到一个kernel中，并插入到 trt_helper.py addLayerNorm函数中。可以使用testLayerNormPlugin.py对合并后的plugin进行单元测试验证。
+3. 进阶：在2的基础上进一步优化，线索见 https://www.bilibili.com/video/BV1i3411G7vN?spm_id_from=333.999.0.0
 
-### 5. 进行 int8 加速
+### 3. 观察GELU算子的优化过程
+1. GELU算子使用一堆基础算子堆叠实现的（详细见trt_helper.py addGELU函数），直观上感觉很分散，计算量比较大。  
+2. 但在实际build过程中，这些算子会被合并成一个算子。build 过程中需要设置log为trt.Logger.VERBOSE，观察build过程。
+3. 体会trt在转换过程中的加速优化操作。
+
+### 4. 进行 fp16 加速并测试速度
+1. 及格：设置build_config，对模型进行fp16优化。
+1. 优秀：编写fp16 版本的layer_norm算子，使模型最后运行fp16版本的layer_norm算子。
+
+### 5. 进行 int8 加速并测试速度
+1. 完善calibrator.py内的todo函数，使用calibrator_data.txt 校准集，对模型进行int8量化加速。
 
 ## 深度思考
 ### 1. 还有那些算子能合并？
