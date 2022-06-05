@@ -4,8 +4,12 @@
 
 内容是使用TensorRT Python API 手动搭建 BERT 模型。学员不需要从零开始搭建，这里已经搭好了一个模型结构框架，进行相应的填充即可。
 
+## 零、环境安装
+1. trt 版本，建议7.x 以上
+2. trt python 包安装方式，是在trt安装包里的python目录下，直接选择对应的python版本安装即可
+3. onnx，pycuda，选择比较新的版本即可，无明确版本要求。
 
-### 一 文件信息
+## 一 文件信息
 1. model2onnx.py 使用pytorch 运行 bert 模型，生成demo 输入输出和onnx模型
 2. onnx2trt.py 将onnx，使用onnx-parser转成trt模型，并infer
 3. builder.py 输入onnx模型，并进行转换
