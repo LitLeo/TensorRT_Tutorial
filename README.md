@@ -17,6 +17,8 @@
  - 2017-11-25 增加博客-TensorRT Plugin使用方式简介-以leaky relu层为例
  - 2020-8-31 增加博客《TensorRT Github 开源部分介绍》
  - 2020-9-7 增加博客《TensorRT 可借鉴代码汇总》
+ - 2022-11-2 增加博客《Conformer Encoder GPU 加速策略较全面汇总》
+ - 2022-11-2 增加博客《TensorRT 转换模型的几种方式比较》
 
 ----
 
