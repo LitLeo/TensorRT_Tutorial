@@ -166,3 +166,136 @@ TensorRT 8.5.3 将是最后一个支持 NVIDIA Kepler（SM 3.x）和 NVIDIA Maxw
 ### [1.11. 报告错误](#bug-reporting)
 
 NVIDIA非常重视各种类型的反馈。如果您遇到任何问题，请按照[报告TensorRT问题](#reporting-issues)部分的说明来报告问题。
+
+## [2. TensorRT的功能](#fit)
+
+本章概述了您可以使用TensorRT做什么。它旨在为所有TensorRT用户提供帮助。
+### [2.1. C++和Python API](#api)
+
+TensorRT的API提供了C++和Python的语言绑定，几乎具有相同的功能。Python API可以与Python数据处理工具包和库（如NumPy和SciPy）进行互操作。C++ API可能更高效，并且在一些合规性要求方面可能更好，例如在汽车应用中。
+
+注意：Python API并非适用于所有平台。有关更多信息，请参阅_[NVIDIA TensorRT支持矩阵](https://docs.nvidia.com/deeplearning/sdk/tensorrt-support-matrix/index.html)_。
+### [2.2. 编程模型](#prog-model)
+
+TensorRT分为两个阶段。在第一个阶段，通常是离线进行的，您提供TensorRT模型定义，TensorRT会针对目标GPU进行优化。在第二个阶段，您使用优化后的模型来进行推理。
+### [2.2.1. 构建阶段](#build-phase)
+
+TensorRT构建阶段的最高级接口是_Builder_（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_builder.html)，[Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Core/Builder.html)）。构建器负责优化模型并生成_Engine_。
+
+要构建一个引擎，您必须：
+
+*   创建网络定义。
+*   为构建器指定配置。
+*   调用构建器来创建引擎。
+
+_NetworkDefinition_接口（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_network_definition.html)，[Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Graph/Network.html#inetworkdefinition)）用于定义模型。将模型从框架以ONNX格式导出，并使用TensorRT的ONNX解析器填充网络定义是将模型传输到TensorRT的最常见路径。但是，您也可以使用TensorRT的_Layer_（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_layer.html)，[Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Graph/LayerBase.html#ilayer)）和_Tensor_（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_tensor.html)，[Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Graph/LayerBase.html#itensor)）接口逐步构建定义。
+
+无论您选择哪种方式，您还必须定义哪些张量是网络的输入和输出。没有标记为输出的张量被视为可以由构建器优化掉的临时值。输入和输出张量必须命名，以便在运行时，TensorRT知道如何将输入和输出缓冲区绑定到模型。
+_BuilderConfig_ 接口（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_builder_config.html)，[Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Core/BuilderConfig.html)）用于指定 TensorRT 如何优化模型。在可用的配置选项中，您可以控制 TensorRT 减少计算精度的能力，控制内存和运行时执行速度之间的权衡，以及限制 CUDA® 内核的选择。由于构建器可能需要几分钟甚至更长时间来运行，您还可以控制构建器如何搜索内核，并缓存搜索结果以供后续运行使用。
+
+在拥有网络定义和构建器配置之后，您可以调用构建器来创建引擎。构建器会消除无效计算，折叠常量，并重新排序和组合操作，以在 GPU 上更高效地运行。它可以选择减少浮点计算的精度，要么仅使用 16 位浮点数运行它们，要么通过量化浮点值来执行计算，以便可以使用 8 位整数进行计算。它还会使用不同的数据格式计时每个层的多个实现，然后计算一个最佳的调度来执行模型，最小化内核执行和格式转换的综合成本。
+
+构建器以一种称为 _plan_ 的序列化形式创建引擎，该引擎可以立即反序列化，或保存到磁盘以供以后使用。
+
+注意：
+
+*   由 TensorRT 创建的引擎特定于创建它们的 TensorRT 版本和 GPU。
+*   TensorRT 的网络定义不会深度复制参数数组（例如卷积的权重）。因此，在构建阶段完成之前，您不能释放这些数组的内存。当使用 ONNX 解析器导入网络时，解析器拥有权重，因此在构建阶段完成之前不能销毁解析器。
+*   构建器会计算算法的执行时间以确定最快的算法。与其他GPU任务同时运行构建器可能会干扰计时，导致优化效果不佳。
+### [2.2.2. 运行时阶段](#runtime-phase)
+
+TensorRT 执行阶段的最高级接口是 _运行时_ ([C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_runtime.html), [Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Core/Runtime.html))。
+
+在使用运行时时，通常会执行以下步骤：
+
+*   反序列化计划以创建引擎。
+*   从引擎创建执行上下文。
+
+然后，重复执行以下步骤：
+
+*   为推理填充输入缓冲区。
+*   在执行上下文上调用 enqueueV3() 来运行推理。
+
+_引擎_ 接口 ([C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_cuda_engine.html), [Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Core/Engine.html)) 表示一个优化的模型。您可以查询引擎以获取有关网络的输入和输出张量的信息 - 期望的维度、数据类型、数据格式等等。
+
+从引擎创建的 _执行上下文_ 接口 ([C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_execution_context.html), [Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Core/ExecutionContext.html)) 是调用推理的主要接口。执行上下文包含与特定调用相关联的所有状态 - 因此您可以有多个与单个引擎相关联的上下文，并且可以并行运行它们。
+
+在调用推理时，您必须在适当的位置设置输入和输出缓冲区。根据数据的性质，这可以是在 CPU 或 GPU 内存中。如果根据您的模型不明显，您可以查询引擎以确定在哪个内存空间提供缓冲区。
+在设置好缓冲区之后，可以异步地调用推理（enqueueV3）。所需的内核会在一个CUDA流上被排队，并且尽快将控制返回给应用程序。某些网络需要在CPU和GPU之间进行多次控制传输，因此控制可能不会立即返回。要等待异步执行完成，请使用[cudaStreamSynchronize](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__STREAM.html)在流上进行同步。
+### [2.3. 插件](#plugins)
+
+TensorRT具有一个“插件”接口，允许应用程序提供TensorRT本身不支持的操作的实现。通过在TensorRT的PluginRegistry中创建和注册插件，ONNX解析器可以在翻译网络时找到这些插件。
+
+TensorRT附带了一套插件库，并且可以在[这里](https://github.com/NVIDIA/TensorRT/tree/main/plugin)找到其中许多插件的源代码以及一些其他插件。
+
+有关更多详细信息，请参阅[使用自定义层扩展TensorRT](#extending "NVIDIA TensorRT支持许多类型的层，并且其功能不断扩展；然而，有时支持的层不能满足模型的特定需求。在这种情况下，可以通过实现自定义层来扩展TensorRT，通常称为插件。")章节。
+### [2.4. 类型和精度](#types-precision)
+
+TensorRT支持使用FP32、FP16、INT8、Bool和INT32数据类型进行计算。
+
+当TensorRT选择CUDA内核来实现网络中的浮点运算时，默认情况下会使用FP32实现。有两种方法可以配置不同精度的级别：
+
+*   在模型级别控制精度，可以使用BuilderFlag选项（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/namespacenvinfer1.html#abdc74c40fe7a0c3d05d2caeccfbc29c1)，[Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Core/BuilderConfig.html#tensorrt.BuilderFlag)）来指示TensorRT在搜索最快实现时可能选择较低精度的实现（因为较低精度通常更快，如果允许的话，它通常会选择较低精度）。
+    
+    因此，您可以轻松地指示TensorRT在整个模型中使用FP16进行计算。对于输入动态范围约为1的规则化模型，这通常会产生显著的加速，而准确性变化可以忽略不计。
+    
+*   对于更细粒度的控制，如果网络的一部分对数值敏感或需要较高的动态范围，则可以为该层指定算术精度。
+
+有关更多详细信息，请参阅[减少精度](#reduced-precision)部分。
+### [2.5. 量化](#quantization)
+
+TensorRT支持量化浮点数，即将浮点值线性压缩并舍入为8位整数。这显著提高了算术吞吐量，同时减少了存储需求和内存带宽。在量化浮点张量时，TensorRT必须知道其动态范围-即重要表示的值范围-在量化时超出此范围的值将被截断。
+
+动态范围信息可以由构建器计算（称为_校准_），基于代表性输入数据。或者，您可以在框架中执行量化感知训练，并将具有必要动态范围信息的模型导入到TensorRT中。
+
+有关详细信息，请参阅[使用INT8](#working-with-int8)章节。
+### [2.6. 张量和数据格式](#data-layout)
+
+在定义网络时，TensorRT假设张量由多维C风格数组表示。每个层对其输入有特定的解释：例如，2D卷积会假设其输入的最后三个维度以CHW格式表示 - 不能使用例如WHC格式的选项。有关每个层如何解释其输入，请参阅[TensorRT运算符参考](https://docs.nvidia.com/deeplearning/tensorrt/operators/docs/index.html)。
+
+请注意，张量的元素数量最多限制为2^31-1个。
+
+在优化网络时，TensorRT在内部执行转换（包括到HWC，以及更复杂的格式），以使用最快的CUDA核心。通常，格式的选择是为了优化性能，应用程序无法控制选择。然而，底层数据格式在I/O边界（网络输入和输出，以及传递数据给插件和从插件传递数据）处是可见的，以允许应用程序最小化不必要的格式转换。
+
+有关更多详细信息，请参阅[I/O格式](#reformat-free-network-tensors "TensorRT使用许多不同的数据格式优化网络。为了允许在TensorRT和客户端应用程序之间高效传递数据，这些底层数据格式在网络I/O边界处是可见的，即对于标记为网络输入或输出的张量以及在传递数据给插件和从插件传递数据时。对于其他张量，TensorRT选择能够实现最快整体执行速度的格式，并可能插入重新格式化以提高性能。")部分。
+### [2.7. 动态形状](#dynamic-shapes)
+
+默认情况下，TensorRT根据模型在其定义时的输入形状（批处理大小、图像大小等）进行优化。然而，构建器可以配置为允许在运行时调整输入维度。为了实现这一点，您可以在构建器配置中指定一个或多个优化配置文件（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_optimization_profile.html)，[Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Core/OptimizationProfile.html?highlight=optimizationprofile)），其中包含每个输入的最小和最大形状，以及该范围内的优化点。
+
+TensorRT为每个配置文件创建一个优化引擎，选择适用于\[最小值，最大值\]范围内所有形状并且对于优化点最快的CUDA核。然后，您可以在运行时从配置文件中选择。
+
+有关更多详细信息，请参阅[使用动态形状](#work_dynamic_shapes "动态形状是在运行时延迟指定一些或所有张量维度的能力。动态形状可以通过C++和Python接口使用。")章节。
+### [2.8. DLA](#dla-ovr)
+
+TensorRT支持NVIDIA的深度学习加速器（DLA），它是许多NVIDIA SoCs上的专用推理处理器，支持TensorRT的部分层次。TensorRT允许您在DLA上执行网络的一部分，其余部分在GPU上执行；对于可以在任一设备上执行的层次，您可以在生成器配置中按层次选择目标设备。
+
+有关更多详细信息，请参阅[与DLA一起使用](#dla_topic)章节。
+### [2.9. 更新权重](#updating-weights)
+
+在构建引擎时，您可以指定它以后可能会更新其权重。如果您经常更新模型的权重而不改变结构，例如在强化学习或在保留相同结构的情况下重新训练模型时，这将非常有用。使用 _Refitter_ ([C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_refitter.html), [Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Core/Refitter.html)) 接口执行权重更新。
+
+有关更多详细信息，请参阅[重新安装引擎](#refitting-engine-c "TensorRT可以使用新的权重重新安装引擎，而无需重新构建引擎，但构建时必须指定此选项：") 部分。
+### [2.10. trtexec工具](#trtexec-ovr)
+
+在示例目录中包含了一个命令行包装工具，名为trtexec。trtexec是一个无需开发自己的应用程序即可使用TensorRT的工具。trtexec工具有三个主要用途：
+
+*   在随机或用户提供的输入数据上进行网络基准测试。
+*   从模型中生成序列化引擎。
+*   从构建器生成序列化的计时缓存。
+
+有关详细信息，请参阅[trtexec](#trtexec "在示例目录中包含了一个命令行包装工具，名为trtexec。trtexec是一个无需开发自己的应用程序即可快速利用TensorRT的工具。trtexec工具有三个主要用途：")部分。
+### [2.11. Polygraphy](#polygraphy-ovr)
+
+Polygraphy是一个旨在帮助在TensorRT和其他框架中运行和调试深度学习模型的工具包。它包括一个使用此API构建的[Python API](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy)和[命令行界面（CLI）](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/polygraphy/tools)。
+
+使用Polygraphy，您可以：
+
+*   在多个后端（如TensorRT和ONNX-Runtime）之间运行推断并比较结果（例如[API](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/api/01_comparing_frameworks)，[CLI](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/cli/run/01_comparing_frameworks)）。
+*   将模型转换为不同的格式，例如使用训练后量化的TensorRT引擎（例如[API](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/api/04_int8_calibration_in_tensorrt)，[CLI](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/cli/convert/01_int8_calibration_in_tensorrt)）。
+*   查看有关各种类型模型的信息（例如[CLI](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/cli/inspect)）。
+*   在命令行上修改ONNX模型：
+    *   提取子图（例如[CLI](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/cli/surgeon/01_isolating_subgraphs)）。
+    *   简化和清理（例如[CLI](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/cli/surgeon/02_folding_constants)）。
+*   隔离TensorRT中的故障策略（例如[CLI](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/cli/debug/01_debugging_flaky_trt_tactics)）。
+
+有关更多详细信息，请参阅[Polygraphy存储库](https://github.com/NVIDIA/TensorRT/tree/main/tools/Polygraphy)。

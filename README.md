@@ -1,3 +1,6 @@
+# 中文翻译文档
+ - 2023-9-27 增加 TensorRT8.5.3的中文翻译文档，使用Chat-GPT翻译+精校，chapter1-2
+ 
 # 建议看最新视频版本！列表如下
  - [《TensorRT Tutorial（一）如何选择TensorRT版本》][21]
  - [《TensorRT Tutorial（二）编译 TensorRT 的开源源码》][22]
@@ -59,11 +62,6 @@ TensorRT作为NVIDIA推出的c++库，能够实现高性能推理（inference）
 ## 参与者（按参与时间排序）
 TensorRT User Guide 翻译
  - [LitLeo][18]
- - [MoyanZitto][19]
-
-翻译校对
-
- - 赵开勇
 
 TensorRT samples 介绍分析讲解
 - [LitLeo][20]
