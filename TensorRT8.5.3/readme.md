@@ -303,7 +303,6 @@ Polygraphy是一个旨在帮助在TensorRT和其他框架中运行和调试深�
 *   隔离TensorRT中的故障策略（例如[CLI](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/cli/debug/01_debugging_flaky_trt_tactics)）。
 
 有关更多详细信息，请参阅[Polygraphy存储库](https://github.com/NVIDIA/TensorRT/tree/main/tools/Polygraphy)。
-<<<<<<< HEAD
 
 
 ## [3. C++ API](#c_topics)
@@ -312,7 +311,7 @@ Polygraphy是一个旨在帮助在TensorRT和其他框架中运行和调试深�
 
 C++ API可以通过头文件NvInfer.h访问，并位于nvinfer1命名空间中。例如，一个简单的应用程序可能会以以下方式开始：
 
-```plain
+```c++
 #include "NvInfer.h"
 
 using namespace nvinfer1;
@@ -327,7 +326,7 @@ TensorRT C++ API中的接口类以I前缀开头，例如ILogger、IBuilder等。
 
 要创建一个构建器，首先必须实例化ILogger接口。以下示例捕获所有警告消息，但忽略信息性消息：
 
-```plain
+```c++
 class Logger : public ILogger           
 {
     void log(Severity severity, const char* msg) noexcept override
@@ -341,14 +340,14 @@ class Logger : public ILogger
 
 然后，您可以创建一个构建器的实例：
 
-```plain
+```c++
 IBuilder* builder = createInferBuilder(logger);
 ```
 ### [3.1.1. 创建网络定义](#create_network_c)
 
 在创建了构建器之后，优化模型的第一步是创建网络定义：
 
-```plain
+```c++
 uint32_t flag = 1U <<static_cast<uint32_t>
     (NetworkDefinitionCreationFlag::kEXPLICIT_BATCH); 
 
@@ -360,7 +359,7 @@ INetworkDefinition* network = builder->createNetworkV2(flag);
 
 现在，网络定义必须从 ONNX 表示中填充。ONNX 解析器 API 在文件 NvOnnxParser.h 中，解析器位于 nvonnxparser C++ 命名空间中。
 
-```plain
+```c++
 #include “NvOnnxParser.h”
 
 using namespace nvonnxparser;
@@ -368,13 +367,13 @@ using namespace nvonnxparser;
 
 您可以创建一个 ONNX 解析器来填充网络，如下所示：
 
-```plain
+```c++
 IParser* parser = createParser(*network, logger);
 ```
 
 然后，读取模型文件并处理任何错误。
 
-```plain
+```c++
 parser->parseFromFile(modelFile, 
     static_cast<int32_t>(ILogger::Severity::kWARNING));
 for (int32_t i = 0; i < parser.getNbErrors(); ++i)
@@ -388,25 +387,25 @@ TensorRT 网络定义的一个重要方面是它包含指向模型权重的指�
 
 下一步是创建一个构建配置，指定TensorRT如何优化模型。
 
-```plain
+```c++
 IBuilderConfig* config = builder->createBuilderConfig();
 ```
 
 这个接口有许多属性可以设置，以便控制TensorRT如何优化网络。一个重要的属性是最大工作空间大小。层的实现通常需要一个临时工作空间，而这个参数限制了网络中任何层可以使用的最大大小。如果提供的工作空间不足，TensorRT可能无法为某个层找到实现。默认情况下，工作空间设置为给定设备的总全局内存大小；当需要时，可以进行限制，例如在单个设备上构建多个引擎时。
 
-```plain
+```c++
 config->setMemoryPoolLimit(MemoryPoolType::kWORKSPACE, 1U << 20);
 ```
 
 配置项指定后，可以构建引擎。
 
-```plain
+```c++
 IHostMemory*  serializedModel = builder->buildSerializedNetwork(*network, *config);
 ```
 
 由于序列化引擎包含了必要的权重副本、解析器、网络定义、构建配置和构建器，它们不再需要并且可以安全地删除：
 
-```plain
+```c++
 delete parser;
 delete network;
 delete config;
@@ -415,7 +414,7 @@ delete builder;
 
 然后可以将引擎保存到磁盘上，并删除序列化引擎的缓冲区。
 
-```plain
+```c++
 delete serializedModel
 ```
 
@@ -425,13 +424,13 @@ delete serializedModel
 
 假设您之前已经序列化了一个优化模型并且想要进行推理，您必须创建一个 Runtime 接口的实例。与构建器一样，运行时需要一个日志记录器的实例：
 
-```plain
+```c++
 IRuntime* runtime = createInferRuntime(logger);
 ```
 
 在将模型读入缓冲区之后，您可以对其进行反序列化以获取一个引擎：
 
-```plain
+```c++
 ICudaEngine* engine = 
   runtime->deserializeCudaEngine(modelData, modelSize);
 ```
@@ -439,7 +438,7 @@ ICudaEngine* engine =
 
 引擎保存了优化模型，但要执行推理，我们必须为中间激活状态管理额外的状态。这可以通过使用ExecutionContext接口来完成：
 
-```plain
+```c++
 IExecutionContext *context = engine->createExecutionContext();
 ```
 
@@ -447,14 +446,14 @@ IExecutionContext *context = engine->createExecutionContext();
 
 要执行推理，您必须传递TensorRT缓冲区作为输入和输出，TensorRT要求您使用setTensorAddress调用来指定缓冲区的名称和地址。您可以使用您为输入和输出张量提供的名称查询引擎，以找到数组中的正确位置：
 
-```plain
+```c++
 context->setTensorAddress(INPUT_NAME, inputBuffer);
 context->setTensorAddress(OUTPUT_NAME, outputBuffer);
 ```
 
 然后，您可以调用TensorRT的enqueueV3方法，使用CUDA流异步开始推理：
 
-```plain
+```c++
 context->enqueueV3(stream);
 ```
 
@@ -467,20 +466,20 @@ context->enqueueV3(stream);
 
 Python API可以通过tensorrt模块访问：
 
-```plain
+```python
 import tensorrt as trt
 ```
 ### [4.1. 构建阶段](#importing_trt_python)
 
 要创建一个构建器，您必须首先创建一个记录器。Python绑定包含一个简单的记录器实现，它将所有严重性前的消息记录到标准输出。
 
-```plain
+```python
 logger = trt.Logger(trt.Logger.WARNING)
 ```
 
 或者，您可以通过派生自ILogger类来定义自己的记录器实现：
 
-```plain
+```python
 class MyLogger(trt.ILogger):
     def __init__(self):
        trt.ILogger.__init__(self)
@@ -493,7 +492,7 @@ logger = MyLogger()
 
 然后，您可以创建一个构建器：
 
-```plain
+```python
 builder = trt.Builder(logger)
 ```
 
@@ -502,7 +501,7 @@ builder = trt.Builder(logger)
 
 在创建构建器后，优化模型的第一步是创建网络定义：
 
-```plain
+```python
 network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
 ```
 
@@ -511,13 +510,13 @@ network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPL
 
 现在，网络定义必须从ONNX表示中填充。您可以按照以下方式创建一个ONNX解析器来填充网络：
 
-```plain
+```python
 parser = trt.OnnxParser(network, logger)
 ```
 
 然后，读取模型文件并处理任何错误：
 
-```plain
+```python
 success = parser.parse_from_file(model_path)
 for idx in range(parser.num_errors):
     print(parser.get_error(idx))
@@ -529,25 +528,25 @@ if not success:
 
 下一步是创建构建配置，指定TensorRT如何优化模型：
 
-```plain
+```python
 config = builder.create_builder_config()
 ```
 
 这个接口有很多属性，您可以设置这些属性来控制TensorRT如何优化网络。一个重要的属性是最大工作空间大小。层的实现通常需要一个临时工作空间，而这个参数限制了网络中任何层可以使用的最大大小。如果提供的工作空间不足，TensorRT可能无法为某个层找到实现：
 
-```plain
+```python
 config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1 << 20) # 1 MiB
 ```
 
 配置指定后，可以使用以下代码构建并序列化引擎：
 
-```plain
+```python
 serialized_engine = builder.build_serialized_network(network, config)
 ```
 
 将引擎保存到文件以供将来使用可能会很有用。您可以这样做：
 
-```plain
+```python
 with open(“sample.engine”, “wb”) as f:
     f.write(serialized_engine)
 ```
@@ -557,19 +556,19 @@ with open(“sample.engine”, “wb”) as f:
 
 要执行推理，使用Runtime接口反序列化引擎。与构建器一样，运行时需要一个日志记录器的实例。
 
-```plain
+```python
 runtime = trt.Runtime(logger)
 ```
 
 然后，您可以从内存缓冲区反序列化引擎：
 
-```plain
+```python
 engine = runtime.deserialize_cuda_engine(serialized_engine)
 ```
 
 如果需要，可以先从文件加载引擎：
 
-```plain
+```python
 with open(“sample.engine”, “rb”) as f:
     serialized_engine = f.read()
 ```
@@ -577,7 +576,7 @@ with open(“sample.engine”, “rb”) as f:
 
 引擎保存了优化模型，但执行推理需要额外的中间激活状态。这可以通过使用IExecutionContext接口来实现：
 
-```plain
+```python
 context = engine.create_execution_context()
 ```
 
@@ -585,7 +584,7 @@ context = engine.create_execution_context()
 
 为了执行推理，您必须为输入和输出指定缓冲区：
 
-```plain
+```python
 context.set_tensor_address(name, ptr)
 ```
 
@@ -597,7 +596,7 @@ context.set_tensor_address(name, ptr)
 
 接下来，开始推理：
 
-```plain
+```python
 context.execute_async_v3(buffers, stream_ptr)
 ```
 
@@ -605,7 +604,7 @@ context.execute_async_v3(buffers, stream_ptr)
 
 要确定推理（和异步传输）何时完成，使用标准的CUDA同步机制，例如事件或等待流。例如，使用Polygraphy：
 
-```plain
+```python
 stream.synchronize()
 ```
 
@@ -651,7 +650,7 @@ ExecutionContext使用两种类型的设备内存：
 
 构建网络时，构建器会在kINFO严重级别下输出有关执行上下文使用的持久内存和临时内存量的信息。通过检查日志，消息看起来类似于以下内容：
 
-```plain
+```shell
 [08/12/2021-17:39:11] [I] [TRT] Total Host Persistent Memory: 106528
 [08/12/2021-17:39:11] [I] [TRT] Total Device Persistent Memory: 29785600
 [08/12/2021-17:39:11] [I] [TRT] Total Scratch Memory: 9970688
@@ -665,7 +664,7 @@ TensorRT的依赖项（[cuDNN](https://developer.nvidia.com/cudnn)和[cuBLAS](ht
 CUDA基础设施和TensorRT的设备代码也会消耗设备内存。内存的使用量因平台、设备和TensorRT版本而异。您可以使用cudaGetMemInfo来确定正在使用的设备内存的总量。
 TensorRT在构建器和运行时的关键操作之前和之后测量内存使用量。这些内存使用统计数据会被打印到TensorRT的信息记录器中。例如：
 
-```plain
+```shell
 [MemUsageChange] Init CUDA: CPU +535, GPU +0, now: CPU 547, GPU 1293 (MiB)
 ```
 
@@ -712,7 +711,7 @@ _AlgorithmSelector_（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_
 
 TensorRT可以在不重新构建的情况下使用新的权重来重新安装引擎，但在构建时必须指定此选项：
 
-```plain
+```c++
 ...
 config->setFlag(BuilderFlag::kREFIT) 
 builder->buildSerializedNetwork(network, config);
@@ -720,14 +719,14 @@ builder->buildSerializedNetwork(network, config);
 
 然后，您可以创建一个Refitter对象：
 
-```plain
+```c++
 ICudaEngine* engine = ...;
 IRefitter* refitter = createInferRefitter(*engine,gLogger)
 ```
 
 然后更新权重。例如，要更新名为“MyLayer”的卷积层的核心权重：
 
-```plain
+```c++
 Weights newWeights = ...;
 refitter->setWeights("MyLayer",WeightsRole::kKERNEL,
                     newWeights);
@@ -739,7 +738,7 @@ refitter->setWeights("MyLayer",WeightsRole::kKERNEL,
 
 您可以使用INetworkDefinition::setWeightsName()在构建时为权重命名 - ONNX解析器使用此API将权重与ONNX模型中使用的名称关联起来。然后，稍后可以使用setNamedWeights来更新权重：
 
-```plain
+```c++
 Weights newWeights = ...;
 refitter->setNamedWeights("MyWeights", newWeights);
 ```
@@ -748,7 +747,7 @@ setNamedWeights和setWeights可以同时使用，也就是说，您可以使用s
 
 这通常需要两次调用IRefitter::getMissing，第一次获取必须提供的权重对象数量，第二次获取它们的层和角色。
 
-```plain
+```c++
 const int32_t n = refitter->getMissing(0, nullptr, nullptr);
 std::vector<const char*> layerNames(n);
 std::vector<WeightsRole> weightsRoles(n);
@@ -758,7 +757,7 @@ refitter->getMissing(n, layerNames.data(),
 
 或者，要获取所有缺失权重的名称，请运行：
 
-```plain
+```c++
 const int32_t n = refitter->getMissingWeights(0, nullptr);
 std::vector<const char*> weightsNames(n);
 refitter->getMissingWeights(n, weightsNames.data());
@@ -766,7 +765,7 @@ refitter->getMissingWeights(n, weightsNames.data());
 
 您可以以任何顺序提供缺失的权重：
 
-```plain
+```c++
 for (int32_t i = 0; i < n; ++i)
     refitter->setWeights(layerNames[i], weightsRoles[i],
                          Weights{...});
@@ -776,7 +775,7 @@ for (int32_t i = 0; i < n; ++i)
 
 一旦提供了所有权重，您可以更新引擎：
 
-```plain
+```c++
 bool success = refitter->refitCudaEngine();
 assert(success);
 ```
@@ -785,7 +784,7 @@ assert(success);
 
 然后，您可以删除refitter：
 
-```plain
+```c++
 delete refitter;
 ```
 
@@ -826,7 +825,7 @@ sampleAlgorithmSelector演示了如何使用算法选择器实现构建的确定
 
 首先创建builder和network对象。请注意，在下面的示例中，使用与所有C++示例共同的[logger.cpp](https://github.com/NVIDIA/TensorRT/blob/main/samples/common/logger.cpp)文件初始化了日志记录器。C++示例的辅助类和函数可以在[common.h](https://github.com/NVIDIA/TensorRT/blob/main/samples/common/common.h)头文件中找到。
 
-```plain
+```c++
     auto builder = SampleUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(sample::gLogger.getTRTLogger()));
     const auto explicitBatchFlag = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
     auto network = SampleUniquePtr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatchFlag));
@@ -836,13 +835,13 @@ sampleAlgorithmSelector演示了如何使用算法选择器实现构建的确定
 
 通过指定输入张量的名称、数据类型和完整维度，将输入层添加到网络中。一个网络可以有多个输入，尽管在这个示例中只有一个：
 
-```plain
+```c++
 auto data = network->addInput(INPUT_BLOB_NAME, datatype, Dims4{1, 1, INPUT_H, INPUT_W});
 ```
 
 使用隐藏层输入节点、步幅和过滤器和偏置的权重，添加卷积层。
 
-```plain
+```c++
 auto conv1 = network->addConvolution(
 *data->getOutput(0), 20, DimsHW{5, 5}, weightMap["conv1filter"], weightMap["conv1bias"]);
 conv1->setStride(DimsHW{1, 1});
@@ -852,42 +851,53 @@ conv1->setStride(DimsHW{1, 1});
 
 添加池化层；注意，上一层的输出被作为输入传递。
 
-```plain
-您是一位专业的翻译员。将其翻译为简体中文，不要修改任何现有的Markdown命令：auto pool1 = network->addPooling(*conv1->getOutput(0), PoolingType::kMAX, DimsHW{2, 2});
+```c++
+auto pool1 = network->addPooling(*conv1->getOutput(0), PoolingType::kMAX, DimsHW{2, 2});
 pool1->setStride(DimsHW{2, 2});
+```
 
 添加一个Shuffle层以准备进行矩阵乘法的输入重塑：
 
+```c++
 int32_t const batch = input->getDimensions().d[0];
 int32_t const mmInputs = input.getDimensions().d[1] * input.getDimensions().d[2] * input.getDimensions().d[3];
 auto inputReshape = network->addShuffle(*input);
 inputReshape->setReshapeDimensions(Dims{2, {batch, mmInputs}});
+```
 
 现在，添加一个MatrixMultiply层。在这里，模型导出器提供了转置的权重，因此对它们指定了kTRANSPOSE选项。
 
+```c++
 IConstantLayer* filterConst = network->addConstant(Dims{2, {nbOutputs, mmInputs}}, mWeightMap["ip1filter"]);
 auto mm = network->addMatrixMultiply(*inputReshape->getOutput(0), MatrixOperation::kNONE, *filterConst->getOutput(0), MatrixOperation::kTRANSPOSE);
+```
 
 添加偏置，将在批次维度上进行广播。
-
+```c++
 auto biasConst = network->addConstant(Dims{2, {1, nbOutputs}}, mWeightMap["ip1bias"]);
 auto biasAdd = network->addElementWise(*mm->getOutput(0), *biasConst->getOutput(0), ElementWiseOperation::kSUM);
+```
 
 添加ReLU激活层：
 
+```c++
 auto relu1 = network->addActivation(*ip1->getOutput(0), ActivationType::kRELU);
+```
 
 添加SoftMax层以计算最终概率：
-
+```c++
 auto prob = network->addSoftMax(*relu1->getOutput(0));
 
 为SoftMax层的输出添加一个名称，以便在推理时将张量绑定到内存缓冲区：
-
+```c++
 prob->getOutput(0)->setName(OUTPUT_BLOB_NAME);
+```
 
 将其标记为整个网络的输出：
-
+```c++
 network->markOutput(*prob->getOutput(0));
+```
+
 MNIST模型的网络已经完全构建完成。请参考[构建引擎](#build_engine_c "下一步是创建一个构建配置，指定TensorRT如何优化模型。")和[反序列化计划](#perform_inference_c "假设您之前已经序列化了一个优化模型并且想要进行推理，您必须创建一个运行时接口的实例。与构建器一样，运行时需要一个日志记录器的实例：")部分，了解如何构建引擎并使用该网络进行推理。
 ### [6.3.2. Python](#create_network_python)
 
@@ -895,7 +905,7 @@ MNIST模型的网络已经完全构建完成。请参考[构建引擎](#build_en
 
 此示例使用一个辅助类来保存模型的一些元数据：
 
-```plain
+```python
 class ModelData(object):
     INPUT_NAME = "data"
     INPUT_SHAPE = (1, 1, 28, 28)
@@ -906,13 +916,13 @@ class ModelData(object):
 
 在此示例中，权重从PyTorch MNIST模型中导入：
 
-```plain
+```python
 weights = mnist_model.get_weights()
 ```
 
 创建日志记录器、构建器和网络类：
 
-```plain
+```python
 TRT_LOGGER = trt.Logger(trt.Logger.ERROR)
 builder = trt.Builder(TRT_LOGGER)
 EXPLICIT_BATCH = 1 << (int)(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
@@ -923,13 +933,13 @@ network = builder.create_network(common.EXPLICIT_BATCH)
 
 接下来，为网络创建输入张量，指定张量的名称、数据类型和形状：
 
-```plain
+```python
 input_tensor = network.add_input(name=ModelData.INPUT_NAME, dtype=ModelData.DTYPE, shape=ModelData.INPUT_SHAPE)
 ```
 
 添加一个卷积层，指定输入、输出特征图数量、卷积核形状、权重、偏置和步长：
 
-```plain
+```python
 conv1_w = weights['conv1.weight'].numpy()
     conv1_b = weights['conv1.bias'].numpy()
     conv1 = network.add_convolution(input=input_tensor, num_output_maps=20, kernel_shape=(5, 5), kernel=conv1_w, bias=conv1_b)
@@ -938,14 +948,14 @@ conv1_w = weights['conv1.weight'].numpy()
 
 添加一个池化层，指定输入（上一卷积层的输出）、池化类型、窗口大小和步长：
 
-```plain
+```python
 pool1 = network.add_pooling(input=conv1.get_output(0), type=trt.PoolingType.MAX, window_size=(2, 2))
     pool1.stride = (2, 2)
 ```
 
 添加下一对卷积和池化层：
 
-```plain
+```python
 conv2_w = weights['conv2.weight'].numpy()
 conv2_b = weights['conv2.bias'].numpy()
 conv2 = network.add_convolution(pool1.get_output(0), 50, (5, 5), conv2_w, conv2_b)
@@ -953,36 +963,46 @@ conv2.stride = (1, 1)
 
 pool2 = network.add_pooling(conv2.get_output(0), trt.PoolingType.MAX, (2, 2))
 pool2.stride = (2, 2)
+```
 
 为了准备进行矩阵乘法运算，添加一个Shuffle层来重塑输入:
 
+```python
 batch = input.shape[0]
 mm_inputs = np.prod(input.shape[1:])
 input_reshape = net.add_shuffle(input)
 input_reshape.reshape_dims = trt.Dims2(batch, mm_inputs)
+```
 
 现在，添加一个MatrixMultiply层。这里，模型导出器提供了转置的权重，因此对这些权重指定了kTRANSPOSE选项。
 
+```python
 filter_const = net.add_constant(trt.Dims2(nbOutputs, k), weights["fc1.weight"].numpy())
 mm = net.add_matrix_multiply(input_reshape.get_output(0), trt.MatrixOperation.NONE, filter_const.get_output(0), trt.MatrixOperation.TRANSPOSE);
+```
 
 添加偏置，将在批次维度上进行广播:
 
+```python
 bias_const = net.add_constant(trt.Dims2(1, nbOutputs), weights["fc1.bias"].numpy())
 bias_add = net.add_elementwise(mm.get_output(0), bias_const.get_output(0), trt.ElementWiseOperation.SUM)
+```
 
 添加ReLU激活层:
 
+```python
 relu1 = network.add_activation(input=fc1.get_output(0), type=trt.ActivationType.RELU)
+```
 
 添加最后的全连接层，并将该层的输出标记为整个网络的输出:
 
+```python
 fc2_w = weights['fc2.weight'].numpy()
 fc2_b = weights['fc2.bias'].numpy()
 fc2 = network.add_fully_connected(relu1.get_output(0), ModelData.OUTPUT_SIZE, fc2_w, fc2_b)
-
 fc2.get_output(0).name = ModelData.OUTPUT_NAME
 network.mark_output(tensor=fc2.get_output(0))
+```
 MNIST模型的网络已经完全构建好了。请参考[构建引擎](#build_engine_python "下一步是创建一个构建配置，指定TensorRT如何优化模型：")和[执行推理](#perform_inference_python "引擎保存了优化后的模型，但要执行推理需要额外的中间激活状态。这可以通过IExecutionContext接口来实现：")部分，了解如何构建引擎并使用该网络进行推理。
 ### [6.4. 降低精度](#reduced-precision)
 ### [6.4.1. 网络层级精度的控制](#network-level-control)
@@ -993,13 +1013,13 @@ MNIST模型的网络已经完全构建好了。请参考[构建引擎](#build_en
 
 C++
 
-```plain
+```c++
 if (builder->platformHasFastFp16()) { … };
 ```
 
 Python
 
-```plain
+```python
 if builder.platform_has_fp16:
 ```
 
@@ -1007,13 +1027,13 @@ if builder.platform_has_fp16:
 
 C++
 
-```plain
+```c++
 config->setFlag(BuilderFlag::kFP16);
 ```
 
 Python
 
-```plain
+```python
 config.set_flag(trt.BuilderFlag.FP16)
 ```
 
@@ -1030,13 +1050,13 @@ config.set_flag(trt.BuilderFlag.FP16)
 
 C++
 
-```plain
+```c++
 layer->setPrecision(DataType::kFP16)
 ```
 
 Python
 
-```plain
+```python
 layer.precision = trt.fp16
 ```
 
@@ -1046,13 +1066,13 @@ layer.precision = trt.fp16
 
 C++
 
-```plain
+```c++
 layer->setOutputType(out_tensor_index, DataType::kFLOAT)
 ```
 
 Python
 
-```plain
+```python
 layer.set_output_type(out_tensor_index, trt.fp16)
 ```
 
@@ -1064,13 +1084,13 @@ layer.set_output_type(out_tensor_index, trt.fp16)
 
 C++
 
-```plain
+```c++
 config->setFlag(BuilderFlag::kPREFER_PRECISION_CONSTRAINTS)
 ```
 
 Python
 
-```plain
+```python
 config.set_flag(trt.BuilderFlag.PREFER_PRECISION_CONSTRAINTS)
 ```
 如果首选约束，则TensorRT将遵守它们，除非没有符合首选精度约束的实现，此时它会发出警告并使用最快的可用实现。
@@ -1079,13 +1099,13 @@ config.set_flag(trt.BuilderFlag.PREFER_PRECISION_CONSTRAINTS)
 
 C++
 
-```plain
+```c++
 config->setFlag(BuilderFlag::kOBEY_PRECISION_CONSTRAINTS);
 ```
 
 Python
 
-```plain
+```python
 config.set_flag(trt.BuilderFlag.OBEY_PRECISION_CONSTRAINTS);
 ```
 
@@ -1110,13 +1130,13 @@ TF32 Tensor Cores可以加速使用FP32的网络，通常不会丢失精度。�
 
 C++
 
-```plain
+```c++
 config->clearFlag(BuilderFlag::kTF32);
 ```
 
 Python
 
-```plain
+```python
 config.clear_flag(trt.BuilderFlag.TF32)
 ```
 
@@ -1137,7 +1157,7 @@ TensorRT 使用多种不同的数据格式来优化网络。为了在 TensorRT �
 
 C++
 
-```plain
+```c++
 auto formats = 1U << TensorFormat::kHWC8;
 network->getInput(0)->setAllowedFormats(formats);
 network->getInput(0)->setType(DataType::kHALF);
@@ -1145,7 +1165,7 @@ network->getInput(0)->setType(DataType::kHALF);
 
 Python
 
-```plain
+```python
 formats = 1 << int(tensorrt.TensorFormat.HWC8)
 network.get_input(0).allowed_formats = formats
 network.get_input(0).dtype = tensorrt.DataType.HALF
@@ -1162,6 +1182,7 @@ network.get_input(0).dtype = tensorrt.DataType.HALF
 以下表格显示了支持的格式。
 
 表1. 支持的I/O格式
+
 | 格式 | kINT32 | kFLOAT | kHALF | kINT8 |
 | --- | --- | --- | --- | --- |
 | kLINEAR | 仅适用于GPU | 支持 | 支持 | 支持 |
@@ -1229,7 +1250,7 @@ TensorRT支持两种网络指定模式：显式批处理和隐式批处理。
 
 在创建INetworkDefinition时，必须指定显式与隐式批处理的选择，使用一个标志。以下是显式批处理模式的C++代码：
 
-```plain
+```c++
 IBuilder* builder = ...;
 INetworkDefinition* network = builder->createNetworkV2(1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)))
 ```
@@ -1238,7 +1259,7 @@ INetworkDefinition* network = builder->createNetworkV2(1U << static_cast<uint32_
 
 以下是显式批处理模式的Python代码：
 
-```plain
+```python
 builder = trt.Builder(...)
 builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
 ```
@@ -1250,7 +1271,7 @@ NVIDIA Ampere 架构的 GPU 支持[结构化稀疏性](https://blogs.nvidia.com/
 
 对于每个输出通道和卷积核权重中的每个空间像素，每四个输入通道必须至少有两个零。换句话说，假设卷积核权重的形状为 \[K, C, R, S\]，且 C % 4 == 0，则可以使用以下算法验证要求：
 
-```plain
+```c++
 hasSparseWeights = True
 for k in range(0, K):
     for r in range(0, R):
@@ -1264,7 +1285,7 @@ for k in range(0, K):
 
 C++
 
-```plain
+```c++
 config->setFlag(BuilderFlag::kSPARSE_WEIGHTS);
 config->setFlag(BuilderFlag::kFP16);
 config->setFlag(BuilderFlag::kINT8);
@@ -1272,7 +1293,7 @@ config->setFlag(BuilderFlag::kINT8);
 
 Python
 
-```plain
+```python
 config.set_flag(trt.BuilderFlag.SPARSE_WEIGHTS)
 config.set_flag(trt.BuilderFlag.FP16)
 config.set_flag(trt.BuilderFlag.INT8)
@@ -1280,7 +1301,7 @@ config.set_flag(trt.BuilderFlag.INT8)
 
 在构建 TensorRT 引擎时，当 TensorRT 日志结束时，TensorRT 会报告哪些层包含满足结构化稀疏性要求的权重，并且在哪些层中，TensorRT 选择利用结构化稀疏性的策略。在某些情况下，结构化稀疏性的策略可能比普通策略慢，TensorRT 在这些情况下会选择普通策略。以下输出显示了 TensorRT 日志的示例，显示有关稀疏性的信息：
 
-```plain
+```shell
 [03/23/2021-00:14:05] [I] [TRT] (Sparsity) Layers eligible for sparse math: conv1, conv2, conv3
 ```
 【03/23/2021-00:14:05】【我】【TRT】（稀疏性）TRT推理计划选择了卷积层的稀疏实现：conv2，conv3
@@ -1305,13 +1326,13 @@ TensorRT允许指定一个CUDA事件，一旦输入缓冲区可以被重用，�
 
 C++
 
-```plain
+```c++
 context->setInputConsumedEvent(&inputReady);
 ```
 
 Python
 
-```plain
+```python
 context.set_input_consumed_event(inputReady)
 ```
 ### [6.11. 引擎检查器](#engine-inspector)
@@ -1320,7 +1341,7 @@ TensorRT提供了IEngineInspector API来检查TensorRT引擎内部的信息。�
 
 C++
 
-```plain
+```c++
 auto inspector = std::unique_ptr<IEngineInspector>(engine->createEngineInspector());
 inspector->setExecutionContext(context); // 可选
 std::cout << inspector->getLayerInformation(0, LayerInformationFormat::kJSON); // 打印引擎中第一层的信息。
@@ -1329,7 +1350,7 @@ std::cout << inspector->getEngineInformation(LayerInformationFormat::kJSON); // 
 
 Python
 
-```plain
+```python
 inspector = engine.create_engine_inspector();
 inspector.execution_context = context; # 可选
 print(inspector.get_layer_information(0, LayerInformationFormat.JSON); # 打印引擎中第一层的信息。
@@ -1342,13 +1363,13 @@ print(inspector.get_engine_information(LayerInformationFormat.JSON); # 打印整
 
 kLAYER\_NAMES\_ONLY
 
-```plain
+```shell
 "node_of_gpu_0/res4_0_branch2a_1 + node_of_gpu_0/res4_0_branch2a_bn_1 + node_of_gpu_0/res4_0_branch2a_bn_2"
 ```
 
 kDETAILED
 
-```plain
+```shell
 {
 "name": "node_of_gpu_0/res4_0_branch2a_1 + node_of_gpu_0/res4_0_branch2a_bn_1 + node_of_gpu_0/res4_0_branch2a_bn_2",
   "layerType": "CaskConvolution",
@@ -1382,6 +1403,7 @@ kDETAILED
   "tacticName": "sm80_xmma_fprop_implicit_gemm_interleaved_i8i8_i8i32_f32_nchw_vect_c_32kcrs_vect_c_32_nchw_vect_c_32_tilesize256x128x64_stage4_warpsize4x2x1_g1_tensor16x8x32_simple_t1r1s1_epifadd",
   "tacticValue": "0x11bde0e1d9f2f35d"
 }
+```
 
 此外，当引擎使用动态形状构建时，引擎信息中的动态维度将显示为-1，并且张量格式信息将不会显示，因为这些字段取决于推理阶段的实际形状。要获取特定推理形状的引擎信息，创建一个IExecutionContext，将所有输入维度设置为所需的形状，然后调用inspector->setExecutionContext(context)。设置上下文后，检查器将打印上下文中设置的特定形状的引擎信息。
 trtexec工具提供了\--profilingVerbosity、\--dumpLayerInfo和\--exportLayerInfo标志，可用于获取给定引擎的引擎信息。有关详细信息，请参阅[trtexec](#trtexec "在示例目录中包含一个命令行包装工具，称为trtexec。trtexec是一个工具，可以快速利用TensorRT而无需开发自己的应用程序。trtexec工具有三个主要目的：")部分。
@@ -1395,7 +1417,7 @@ trtexec工具提供了\--profilingVerbosity、\--dumpLayerInfo和\--exportLayerI
 
 预览功能使用32位的PreviewFeature枚举进行定义。功能标识符是功能名称和TensorRT版本的连接。
 
-```plain
+```shell
 <FEATURE_NAME>_XXYY
 ```
 
@@ -1456,6 +1478,7 @@ ONNX使用显式量化表示-当PyTorch或TensorFlow中的模型导出为ONNX时
 请注意，与TensorRT的PTQ相比，在框架中执行QAT或PTQ，然后导出到ONNX将导致一个明确量化的模型。
 
 表2. 隐式量化与显式量化
+
 |     | 隐式量化 | 显式量化 |
 | --- | --- | --- |
 | 用户对精度的控制 | 控制较少：INT8在加速性能的所有内核中使用。 | 对量化/去量化边界有完全控制。 |
@@ -1475,7 +1498,7 @@ ONNX使用显式量化表示-当PyTorch或TensorFlow中的模型导出为ONNX时
 
 在使用每通道量化时，量化的轴必须是输出通道轴。例如，当使用KCRS表示2D卷积的权重时，K是输出通道轴，权重量化可以描述为：
 
-```plain
+```c++
 对于K中的每个k：
     对于C中的每个c：
         对于R中的每个r：
@@ -1487,7 +1510,7 @@ ONNX使用显式量化表示-当PyTorch或TensorFlow中的模型导出为ONNX时
 
 反量化的操作类似，只是定义了逐点操作：
 
-```plain
+```c++
 output[k,c,r,s] := input[k,c,r,s] * scale[k]
 ```
 
@@ -1504,13 +1527,13 @@ TensorRT提供了直接设置动态范围（量化张量必须表示的范围）
 
 C++
 
-```plain
+```c++
 tensor->setDynamicRange(min_float, max_float);
 ```
 
 Python
 
-```plain
+```python
 tensor.dynamic_range = (min_float, max_float)
 ```
 
@@ -1568,7 +1591,7 @@ INT8校准可以与动态范围API一起使用。手动设置动态范围会覆�
 
 在实现了校准器之后，可以配置构建器来使用它：
 
-```plain
+```c++
 config->setInt8Calibrator(calibrator.get());
 ```
 
@@ -1581,26 +1604,26 @@ config->setInt8Calibrator(calibrator.get());
 
 1. 导入 TensorRT：
 
-    ```plain
+    ```python
     import tensorrt as trt
     ```
 
 2. 类似于测试/验证数据集，使用一组输入文件作为校准数据集。确保校准文件能够代表整体推理数据文件。为了让 TensorRT 使用校准文件，您必须创建一个 batchstream 对象。batchstream 对象用于配置校准器。
 
-    ```plain
+    ```python
     NUM_IMAGES_PER_BATCH = 5
     batchstream = ImageBatchStream(NUM_IMAGES_PER_BATCH, calibration_files)
     ```
 
 3. 使用输入节点名称和 batchstream 创建一个 Int8_calibrator 对象：
 
-    ```plain
+    ```python
     Int8_calibrator = EntropyCalibrator(["input_node_name"], batchstream)
     ```
 
 4. 设置 INT8 模式和 INT8 校准器：
 
-    ```plain
+    ```python
     config.set_flag(trt.BuilderFlag.INT8)
     config.int8_calibrator = Int8_calibrator
     ```
@@ -1622,7 +1645,7 @@ config->setInt8Calibrator(calibrator.get());
 
 必须使用INT8精度构建器标志来构建Q/DQ网络：
 
-```plain
+```c++
 config->setFlag(BuilderFlag::kINT8);
 ```
 
@@ -1785,7 +1808,7 @@ _动态形状_是在运行时推迟指定一些或所有张量维度的能力。
     
     通过调用以下方法创建INetworkDefinition：
     
-    ```plain
+    ```c++
     IBuilder::createNetworkV2(1U <<
             static_cast<int>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH))
     ```
@@ -1794,7 +1817,7 @@ _动态形状_是在运行时推迟指定一些或所有张量维度的能力。
     
     通过调用以下方法创建tensorrt.INetworkDefinition：
     
-    ```plain
+    ```python
     create_network(1 <<
             int(tensorrt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
     ```
@@ -1822,13 +1845,13 @@ _动态形状_是在运行时推迟指定一些或所有张量维度的能力。
 
 C++
 
-```plain
+```c++
 networkDefinition.addInput("foo", DataType::kFLOAT, Dims3(3, -1, -1))
 ```
 
 Python
 
-```plain
+```python
 network_definition.add_input("foo", trt.float32, (3, -1, -1))
 ```
 
@@ -1836,13 +1859,13 @@ network_definition.add_input("foo", trt.float32, (3, -1, -1))
 
 C++
 
-```plain
+```c++
 context.setBindingDimensions(0, Dims3(3, 150, 250))
 ```
 
 Python
 
-```plain
+```python
 context.set_binding_shape(0, (3, 150, 250))
 ```
 
@@ -1867,7 +1890,7 @@ Python
 context.get\_binding\_shape(0) 返回(3, 150, 250)。
 注意：setBindingDimensions的返回值仅表示输入与为该输入设置的优化配置文件一致。在指定了所有输入绑定维度之后，您可以通过查询网络的输出绑定维度来检查整个网络是否与动态输入形状一致。
 
-```plain
+```c++
 nvinfer1::Dims out_dim = context->getBindingDimensions(out_index);
 
 if (out_dim.nbDims == -1) {
@@ -1888,13 +1911,13 @@ gLogError << "无效的网络输出，这可能是由于输入形状不一致引
 
 C++
 
-```plain
+```c++
 tensor.setDimensionName(2, "m")
 ```
 
 Python
 
-```plain
+```python
 tensor.set_dimension_name(2, "m")
 ```
 
@@ -1902,13 +1925,13 @@ tensor.set_dimension_name(2, "m")
 
 C++
 
-```plain
+```c++
 tensor.getDimensionName(2) 返回张量的第三个维度的名称，如果没有名称则返回 nullptr。
 ```
 
 Python
 
-```plain
+```python
 tensor.get_dimension_name(2) 返回张量的第三个维度的名称，如果没有名称则返回 None。
 ```
 ### [8.3. 优化配置文件](#opt_profiles)
@@ -1921,7 +1944,7 @@ _优化配置文件_描述了每个网络输入的维度范围以及自动调谐
 
 C++
 
-```plain
+```c++
 IOptimizationProfile* profile = builder.createOptimizationProfile();
 profile->setDimensions("foo", OptProfileSelector::kMIN, Dims3(3,100,200);
 profile->setDimensions("foo", OptProfileSelector::kOPT, Dims3(3,150,250);
@@ -1932,7 +1955,7 @@ config->addOptimizationProfile(profile)
 
 Python
 
-```plain
+```python
 profile = builder.create_optimization_profile();
 profile.set_shape("foo", (3, 100, 200), (3, 150, 250), (3, 200, 300)) 
 config.add_optimization_profile(profile)
@@ -1969,7 +1992,7 @@ setOptimizationProfileAsync()函数替代了现在已弃用的API setOptimizatio
 
 这是一个示例派生类：
 
-```plain
+```c++
 class MyOutputAllocator : nvinfer1::IOutputAllocator
 {
 public:
@@ -2001,7 +2024,7 @@ void* outputPtr{nullptr};
 
 以下是如何使用的示例：
 
-```plain
+```c++
 std::unordered_map<std::string, MyOutputAllocator> allocatorMap;
 
 for (const char* name : names of outputs)
@@ -2039,12 +2062,12 @@ for (const char* name : names of outputs)
 
 以下是实现E的示例派生类：
 
-```plain
+```c++
 class FancyOutputAllocator : nvinfer1::IOutputAllocator
 {
 public:
-```
-void reallocateOutput(
+
+    void reallocateOutput(
         char const* tensorName, void* currentMemory,
         uint64_t size, uint64_t alignment) override
     {
@@ -2083,6 +2106,8 @@ void reallocateOutput(
         cudaFree(outputPtr);
     }
 };
+```
+
 ### [8.4.1. 查找多个优化配置文件的绑定索引](#binding-indices-opt-profiles)
 
 如果使用enqueueV3而不是已弃用的enqueueV2，可以跳过此部分，因为基于名称的方法（如IExecutionContext::setTensorAddress）不需要配置文件后缀。
@@ -2121,21 +2146,21 @@ IShuffleLayer接受一个可选的第二个输入，其中包含在应用第二�
 
 C++
 
-```plain
+```c++
     auto* reshape = networkDefinition.addShuffle(Y);
     reshape.setInput(1, networkDefintion.addShape(X)->getOutput(0));
 ```
 
 Python
 
-```plain
+```python
     reshape = network_definition.add_shuffle(y)
     reshape.set_input(1, network_definition.add_shape(X).get_output(0))
 ```
 
 ISliceLayer接受可选的第二、第三和第四个输入，其中包含起始位置、大小和步长。
 
-```plain
+```c++
 IConcatenationLayer、IElementWiseLayer、IGatherLayer、IIdentityLayer和IReduceLayer
 ```
 
@@ -2171,43 +2196,43 @@ TensorRT用于对张量进行分类的形式推理规则基于类型推理代数
 
 IActivationLayer的签名为：
 
-```plain
+```c++
 IActivationLayer: E → E
 ```
 
 因为它以执行张量作为输入和执行张量作为输出。IElementWiseLayer在这方面是多态的，具有两个签名：
 
-```plain
+```c++
 IElementWiseLayer: S × S → S, E × E → E
 ```
 
 为了简洁起见，让我们采用约定，_t_表示一个变量，表示任一类张量，签名中的所有_t_都指的是同一类张量。那么，前面两个签名可以写成一个多态签名：
 
-```plain
+```c++
 IElementWiseLayer: t × t → t
 ```
 
 两输入的IShuffleLayer的第二个输入是一个形状张量，并且相对于第一个输入是多态的：
 
-```plain
+```c++
 IShuffleLayer (两个输入): t × S → t
 ```
 
 IConstantLayer没有输入，但可以生成任一种类的张量，因此其签名为：
 
-```plain
+```c++
 IConstantLayer: → t
 ```
 
 IShapeLayer的签名允许所有四种可能的组合E→E、E→S、S→E和S→S，因此可以用两个独立变量来表示：
 
-```plain
+```c++
 IShapeLayer: t1 → t2
 ```
 
 以下是完整的规则集，也是用于操作形状张量的层的参考：
 
-```plain
+```c++
 IAssertionLayer: S → 
 IConcatenationLayer: t × t × ...→ t
 IIfConditionalInputLayer: t → t
@@ -2233,6 +2258,7 @@ ISliceLayer (三个输入): t × S × S → t
 ISliceLayer（四个输入）：t × S × S × S → t
 IUnaryLayer：t → t
 所有其他层：E × ... → E × ...
+```
 
 由于一个输出可以是多个后续层的输入，推断的“类型”并不是互斥的。例如，IConstantLayer的输出可以作为一个需要执行张量的使用和一个需要形状张量的使用的输入。IConstantLayer的输出被分类为两者，并且可以在两阶段执行的第一阶段和第二阶段中使用。
 
@@ -2269,13 +2295,13 @@ IUnaryLayer：t → t
 
 C++
 
-```plain
+```c++
 config->setCalibrationProfile(profile)
 ```
 
 Python
 
-```plain
+```python
 config.set_calibration_profile(profile)
 ```
 
@@ -2320,10 +2346,10 @@ TensorRT包含可以加载到应用程序中的插件。有关开源插件的列
 
 例如，您可以按如下方式向网络中添加一个插件层：
 
-```plain
+```c++
 // 在注册表中查找插件
 auto creator = getPluginRegistry()->getPluginCreator(pluginName, pluginVersion);
-```
+
 const PluginFieldCollection* pluginFC = creator->getFieldNames();
 // 为插件层填充字段参数
 // PluginFieldCollection *pluginData = parseAndFillFields(pluginFC, layerFields);
@@ -2335,6 +2361,7 @@ auto layer = network.addPluginV2(&inputs[0], int(inputs.size()), pluginObj);
 // 销毁插件对象
 pluginObj->destroy()
 ...（释放已分配的pluginData）
+```
 
 注意：前面描述的createPlugin方法在堆上创建一个新的插件对象，并返回一个指向它的指针。确保像前面展示的那样销毁pluginObj，以避免内存泄漏。
 
@@ -2355,7 +2382,7 @@ BarPlugin是一个具有两个输入和两个输出的插件，其中：
 
 BarPlugin必须如下派生：
 
-```plain
+```c++
 class BarPlugin : public IPluginV2DynamicExt
 {
 	...覆盖从IPluginV2DynamicExt继承的虚拟方法。
@@ -2371,7 +2398,7 @@ class BarPlugin : public IPluginV2DynamicExt
 
 getOutputDimensions的覆盖以符号表达式的形式返回输出维度，以输入维度为基础构建表达式，使用传递给getOutputDimensions的IExprBuilder。在示例中，对于情况1，不需要构建新的表达式，因为第二个输出的维度与第一个输入的维度相同。
 
-```plain
+```c++
 DimsExprs BarPlugin::getOutputDimensions(int outputIndex, 
     const DimsExprs* inputs, int nbInputs, 
     IExprBuilder& exprBuilder)
@@ -2397,7 +2424,7 @@ supportsFormatCombination的重写必须指示是否允许格式组合。该接�
 
 TensorRT使用supportsFormatCombination来询问给定的格式/类型组合是否适用于连接，给定较低索引连接的格式/类型。因此，重写可以假定较低索引的连接已经经过审查，并关注索引为pos的连接。
 
-```plain
+```c++
 bool BarPlugin::supportsFormatCombination(int pos, const PluginTensorDesc* inOut, int nbInputs, int nbOutputs) override
 {
     assert(0 <= pos && pos < 4);
@@ -2423,7 +2450,7 @@ bool BarPlugin::supportsFormatCombination(int pos, const PluginTensorDesc* inOut
 
 TensorRT使用configurePlugin在运行时设置插件。此插件不需要configurePlugin执行任何操作，因此它是一个空操作：
 
-```plain
+```c++
 void BarPlugin::configurePlugin(
     const DynamicPluginTensorDesc* in, int nbInputs, 
 ```
@@ -2437,7 +2464,7 @@ const DynamicPluginTensorDesc* out, int nbOutputs) override
 
 PoolPlugin是一个插件，用于演示如何扩展自定义池化层的INT8 I/O。推导如下：
 
-```plain
+```c++
 class PoolPlugin : public IPluginV2IOExt
 {
     ...重写继承自IPluginV2IOExt的虚方法。
@@ -2452,7 +2479,7 @@ class PoolPlugin : public IPluginV2IOExt
 
 supportsFormatCombination的重写必须指示允许的INT8 I/O组合。此接口的使用与[示例：使用C++添加支持动态形状的自定义层](#example3_add_custlay_dynamic "要支持动态形状，您的插件必须派生自IPluginV2DynamicExt。")类似。在本示例中，支持的I/O张量格式为带有FP32、FP16或INT8数据类型的线性CHW，但I/O张量必须具有相同的数据类型。
 
-```plain
+```c++
 bool PoolPlugin::supportsFormatCombination(int pos, const PluginTensorDesc* inOut, int nbInputs, int nbOutputs) const override
 {
     assert(nbInputs == 1 && nbOutputs == 1 && pos < nbInputs + nbOutputs);
@@ -2472,7 +2499,7 @@ bool PoolPlugin::supportsFormatCombination(int pos, const PluginTensorDesc* inOu
 *   校准无法确定插件内部张量的动态范围。操作量化数据的插件必须为内部张量计算自己的动态范围。
 TensorRT通过调用configurePlugin方法来通过PluginTensorDesc将信息传递给插件，这些信息存储为成员变量，并进行序列化和反序列化。
 
-```plain
+```c++
 void PoolPlugin::configurePlugin(const PluginTensorDesc* in, int nbInput, const PluginTensorDesc* out, int nbOutput)
 {
     ...
@@ -2490,7 +2517,7 @@ void PoolPlugin::configurePlugin(const PluginTensorDesc* in, int nbInput, const 
 
 最后，重写的UffPoolPluginV2::enqueue方法需要完成工作。它包括一系列核心算法，通过使用实际的批大小、输入、输出、cuDNN流和配置的信息，在运行时执行自定义层。
 
-```plain
+```c++
 int PoolPlugin::enqueue(int batchSize, const void* const* inputs, void** outputs, void* workspace, cudaStream_t stream)
 {
     ...
@@ -2512,7 +2539,7 @@ int PoolPlugin::enqueue(int batchSize, const void* const* inputs, void** outputs
 
 Python API提供了一个名为[add\_plugin\_v2](https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/python_api/infer/Graph/Network.html#tensorrt.INetworkDefinition.add_plugin_v2)的函数，可以向网络中添加插件节点。以下示例说明了这一点。它创建了一个简单的TensorRT网络，并通过查找TensorRT插件注册表来添加了一个泄漏ReLU插件节点。
 
-```plain
+```python
 import tensorrt as trt
 import numpy as np
 
@@ -2557,7 +2584,7 @@ ONNX 解析器会自动尝试将无法识别的节点作为插件导入。如果
 
 IPluginV2DynamicExt中的新功能如下：
 
-```plain
+```c++
 virtual DimsExprs getOutputDimensions(int outputIndex, const DimsExprs* inputs, int nbInputs, IExprBuilder& exprBuilder) = 0;
 
 virtual bool supportsFormatCombination(int pos, const PluginTensorDesc* inOut, int nbInputs, int nbOutputs) = 0;
@@ -2571,7 +2598,7 @@ virtual int enqueue(const PluginTensorDesc* inputDesc, const PluginTensorDesc* o
 
 IPluginV2IOExt中的新功能如下：
 
-```plain
+```c++
 virtual void configurePlugin(const PluginTensorDesc* in, int nbInput, const PluginTensorDesc* out, int nbOutput) = 0;
 
 virtual bool supportsFormatCombination(int pos, const PluginTensorDesc* inOut, int nbInputs, int nbOutputs) const = 0;
@@ -2622,23 +2649,23 @@ configurePlugin
 
 注意：此API不允许资源分配，因为会导致资源泄漏。
 
-初始化
+initialize
 
 此时已知配置，并正在创建推理引擎，因此插件可以设置其内部数据结构并准备执行。
 
-排队
+enqueue
 
 封装插件的实际算法和内核调用，并提供运行时批处理大小、输入、输出和临时空间的指针，以及用于内核执行的CUDA流。
 
-终止
+terminate
 
 销毁引擎上下文，并释放插件持有的所有资源。
 
-克隆
+clone
 
 每当创建包含此插件层的新构建器、网络或引擎时，都会调用此方法。它必须返回具有正确参数的新插件对象。
 
-销毁
+destroy
 
 用于销毁插件对象和每次创建新插件对象时分配的其他内存。每当销毁构建器、网络或引擎时，都会调用此方法。
 
@@ -2726,7 +2753,7 @@ TensorRT插件API不支持直接将形状张量输入到插件，也不支持直
 
 在网络中，可以通过使用零步长切片或重塑空张量来创建虚拟输入张量。以下是使用零步长切片的方法：
 
-```plain
+```c++
 // 感兴趣的形状张量。假设它的值为[P,Q]。
 ITensor* pq = ...;
 
@@ -2789,7 +2816,7 @@ IIteratorLayer支持在任何轴上向前或向后迭代。
 
 *   _loop_\->addIterator(_t_)添加一个IIteratorLayer，它在张量_t_的轴0上进行迭代。例如，如果输入是矩阵：
     
-    ```plain
+    ```shell
     2 3 5
     4 6 8
     ```
@@ -2805,14 +2832,14 @@ ILoopOutputLayer支持三种形式的循环输出：
 
 * _loop_->addLoopOutput(_t_, LoopOutput::kCONCATENATE, _axis_)输出每次迭代的输入与_t_的连接。例如，如果输入是一个1D张量，在第一次迭代时值为{a,b,c}，在第二次迭代时值为{d,e,f}，并且_axis_=0，则输出是矩阵：
 
-    ```plain
+    ```shell
     a b c
     d e f
     ```
 
     如果_axis_=1，则输出为：
 
-    ```plain
+    ```c++
     a d
     b e
     c f
@@ -2824,13 +2851,13 @@ ILoopOutputLayer的kCONCATENATE和kREVERSE形式都需要第二个输入，它�
 
 最后，有IRecurrenceLayer。它的第一个输入指定初始输出值，第二个输入指定下一个输出值。第一个输入必须来自循环外部；第二个输入通常来自循环内部。例如，以下C++代码片段的TensorRT类比形式：
 
-```plain
+```c++
 for (int32_t i = j; ...; i += k) ...
 ```
 
 可以通过以下调用创建，其中j和k为ITensor*：
 
-```plain
+```c++
 ILoop* loop = n.addLoop();
 IRecurrenceLayer* iRec = loop->addRecurrence(j);
 ITensor* i = iRec->getOutput(0);
@@ -2904,7 +2931,7 @@ NVIDIA TensorRT 支持条件 if-then-else 流程控制。TensorRT 条件语句�
 
 IIfConditional实现了一个if-then-else流控制结构，根据动态布尔输入对网络子图进行条件执行。它由一个布尔标量谓词条件和两个分支子图定义：当条件求值为true时执行trueSubgraph，当条件求值为false时执行falseSubgraph：
 
-```plain
+```c++
 如果条件为真，则：
 	output = trueSubgraph(trueInputs);
 否则，
@@ -2916,12 +2943,12 @@ IIfConditional实现了一个if-then-else流控制结构，根据动态布尔输
 
 要定义一个条件语句，请使用方法INetworkDefinition::addIfConditional创建一个IIfConditional实例，然后添加边界和分支层。
 
-```plain
+```c++
 IIfConditional* simpleIf = network->addIfConditional();
 ```
 IIfConditional::setCondition方法接受一个参数：条件张量。这个0D布尔张量（标量）可以由网络中的前一层动态计算得到。它用于决定执行哪个分支。IConditionLayer只有一个输入（条件），没有输出，因为它在条件实现中内部使用。
 
-```plain
+```c++
 // 创建一个同时也是网络输入的条件谓词。
 auto cond = network->addInput("cond", DataType::kBOOL, Dims{0});
 IConditionLayer* condition = simpleIf->setCondition(*cond);
@@ -2931,7 +2958,7 @@ TensorRT不支持使用子图抽象来实现条件分支，而是使用IIfCondit
 
 *   IIfConditionalInputLayer抽象了IIfConditional的分支子图中的一个或两个输入。特定的IIfConditionalInputLayer的输出可以同时供给两个分支。
     
-    ```plain
+    ```c++
     // 创建一个if-conditional输入。
     // x是某个任意的网络张量。
     IIfConditionalInputLayer* inputX = simpleIf->addInput(*x);
@@ -2944,7 +2971,7 @@ IIfConditionalInputLayer是可选的，用于控制哪些层将成为分支的�
 
   IIfConditionalOutputLayer在传统的SSA控制流图中扮演着Φ（Phi）函数节点的类似角色。它的语义是：选择true子图的输出或false子图的输出。
 
-  ```plain
+  ```c++
   // trueSubgraph和falseSubgraph表示网络子图
   IIfConditionalOutputLayer* outputLayer = simpleIf->addOutput(
       *trueSubgraph->getOutput(0), 
@@ -2993,7 +3020,7 @@ IIfConditionalInputLayer是可选的，用于控制哪些层将成为分支的�
 下面的示例展示了如何实现一个简单的条件语句，根据条件在两个张量上进行算术运算。
 #### 条件
 
-```plain
+```c++
 condition = true
 如果 condition 为真:
         output = x + y
@@ -3002,7 +3029,7 @@ condition = true
 ```
 #### 示例
 
-```plain
+```c++
 ITensor* addCondition(INetworkDefinition& n, bool predicate)
 {
     // 条件值是一个常量 int32 输入，被转换为布尔值，因为 TensorRT 不支持布尔常量层。
@@ -3046,7 +3073,7 @@ n.markOutput(*output);
 
 以下示例展示了如何将脚本化的PyTorch代码导出为ONNX格式。函数sum\_even中的代码在循环中嵌套了if条件语句。
 
-```plain
+```c++
 import torch.onnx
 import torch
 import tensorrt as trt
@@ -3112,7 +3139,7 @@ DLA对于从iGPU卸载CNN处理非常有用，并且在这些工作负载中具�
 
 要让 trtexec 使用 DLA，您可以使用 --useDLACore 标志。例如，要在 DLA 核心 0 上以 FP16 模式运行 ResNet-50 网络，并使用[GPU 回退模式](#gpu_fallback "如果一个被标记为在 DLA 上运行的层无法在 DLA 上运行，那么 GPUFallbackMode 将使构建器使用 GPU。由于以下原因，层无法在 DLA 上运行：")来处理不受支持的层，执行以下命令：
 
-```plain
+```c++
  ./trtexec --onnx=data/resnet50/ResNet50.onnx --useDLACore=0 --fp16 --allowGPUFallback
 ```
 
@@ -3192,7 +3219,7 @@ sampleMNIST演示了如何导入训练模型，构建TensorRT引擎，序列化�
 
 示例首先创建构建器：
 
-```plain
+```c++
 auto builder = SampleUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(gLogger));
 if (!builder) return false;
 builder->setMaxBatchSize(batchSize);
@@ -3201,21 +3228,21 @@ config->setMaxWorkspaceSize(16_MB);
 
 然后，启用GPUFallback模式：
 
-```plain
+```c++
 config->setFlag(BuilderFlag::kGPU_FALLBACK);
 config->setFlag(BuilderFlag::kFP16); 或者 config->setFlag(BuilderFlag::kINT8);
 ```
 
 启用DLA上的执行，其中dlaCore指定要在其上执行的DLA核心：
 
-```plain
+```c++
 config->setDefaultDeviceType(DeviceType::kDLA);
 config->setDLACore(dlaCore);
 ```
 
 通过这些附加更改，sampleMNIST已准备好在DLA上执行。要在DLA Core 1上运行sampleMNIST，请使用以下命令：
 
-```plain
+```c++
  ./sample_mnist --useDLACore=0 [--int8|--fp16]
 ```
 
@@ -3225,7 +3252,7 @@ config->setDLACore(dlaCore);
 
 1. 创建构建器、构建器配置和网络：
 
-    ```plain
+    ```c++
     IBuilder* builder = createInferBuilder(gLogger);
     IBuilderConfig* config = builder.createBuilderConfig();
     INetworkDefinition* network = builder->createNetworkV2(0U);
@@ -3233,20 +3260,20 @@ config->setDLACore(dlaCore);
 
 2. 向网络添加输入层，并设置输入维度：
 
-    ```plain
+    ```c++
     auto data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{1, INPUT_H, INPUT_W});
     ```
 
 3. 添加卷积层，包括隐藏层输入节点、步长以及用于过滤器和偏置的权重：
 
-    ```plain
+    ```c++
     auto conv1 = network->addConvolution(*data->getOutput(0), 20, DimsHW{5, 5}, weightMap["conv1filter"], weightMap["conv1bias"]);
     conv1->setStride(DimsHW{1, 1});
     ```
 
 4. 将卷积层设置为在 DLA 上运行：
 
-    ```plain
+    ```c++
     if(canRunOnDLA(conv1))
     {
     config->setFlag(BuilderFlag::kFP16); 或 config->setFlag(BuilderFlag::kINT8);
@@ -3257,13 +3284,13 @@ config->setDLACore(dlaCore);
 
 5. 标记输出：
 
-    ```plain
+    ```c++
     network->markOutput(*conv1->getOutput(0));
     ```
 
 6. 设置 DLA 核心执行：
 
-    ```plain
+    ```c++
     config->setDLACore(0)
     ```
 ### [12.1.3. 使用 cuDLA API](#using-cudla-api)
@@ -3445,20 +3472,20 @@ DLA支持设备独有的格式，并且由于矢量宽度字节要求的限制�
 
 1. 将默认设备类型和引擎能力设置为DLA独立模式。
 
-    ```plain
+    ```c++
     builderConfig->setDefaultDeviceType(DeviceType::kDLA);
     builderConfig->setEngineCapability(EngineCapability::kDLA_STANDALONE);
     ```
 
 2. 指定FP16、INT8或两者。例如：
 
-    ```plain
+    ```c++
     builderConfig->setFlag(BuilderFlag::kFP16);
     ```
 
 3. DLA独立模式不允许重新格式化，因此需要设置BuilderFlag::kDIRECT_IO。
 
-    ```plain
+    ```c++
     builderConfig->setFlag(BuilderFlag::kDIRECT_IO);
     ```
 
@@ -3471,7 +3498,7 @@ trtexec 工具可以生成 DLA 可加载文件，而不是 TensorRT 引擎。通
 
 例如，使用 trtexec 生成一个 ONNX 模型的 FP16 DLA 可加载文件，可以执行以下命令：
 
-```plain
+```c++
 ./trtexec --onnx=model.onnx --saveEngine=model_loadable.bin --useDLACore=0 --fp16 --inputIOFormats=fp16:chw16 --outputIOFormats=fp16:chw16 --buildOnly --safe
 ```
 ### [12.6. 自定义 DLA 内存池](#customize-dla-mem-pools)
@@ -3540,7 +3567,7 @@ Global DRAM
 
 下面的示例代码段显示了测量网络推理主机时间的方法：
 
-```plain
+```c++
 #include <chrono>
 
 auto startTime = std::chrono::high_resolution_clock::now();
@@ -3560,7 +3587,7 @@ float totalTime = std::chrono::duration<float, std::milli>
 
 以下示例代码片段展示了计算两个CUDA事件之间时间的方法：
 
-```plain
+```c++
 cudaEvent_t start, end;
 cudaEventCreate(&start);
 cudaEventCreate(&end);
@@ -3635,13 +3662,13 @@ trtexec工具使用了稍微复杂的方法来排队作业，即在GPU仍在执�
 
 C++
 
-```plain
+```c++
 builderConfig->setProfilingVerbosity(ProfilingVerbosity::kNONE);
 ```
 
 Python
 
-```plain
+```c++
 builder_config.profilling_verbosity = trt.ProfilingVerbosity.NONE
 ```
 
@@ -3649,20 +3676,20 @@ builder_config.profilling_verbosity = trt.ProfilingVerbosity.NONE
 
 C++
 
-```plain
+```c++
 builderConfig->setProfilingVerbosity(ProfilingVerbosity::kDETAILED);
 ```
 
 Python
 
-```plain
+```c++
 builder_config.profilling_verbosity = trt.ProfilingVerbosity.DETAILED
 ```
 #### 使用trtexec运行Nsight Systems
 
 以下是使用[trtexec](#trtexec "在示例目录中包含了一个命令行包装工具，称为trtexec。trtexec是一个快速利用TensorRT的工具，无需开发自己的应用程序。trtexec工具有三个主要用途：")工具收集Nsight Systems配置文件的命令示例：
 
-```plain
+```c++
 trtexec --onnx=foo.onnx --profilingVerbosity=detailed --saveEngine=foo.plan
 nsys profile -o foo_profile --capture-range cudaProfilerApi trtexec --loadEngine=foo.plan --warmUp=0 --duration=0 --iterations=50
 ```
@@ -3677,7 +3704,7 @@ nsys profile -o foo_profile --capture-range cudaProfilerApi trtexec --loadEngine
 
 要对DLA进行性能分析，使用NVIDIA Nsight Systems CLI时，添加\--accelerator-trace nvmedia标志，或者在使用用户界面时启用**收集其他加速器跟踪**。例如，可以使用以下命令与NVIDIA Nsight Systems CLI一起使用：
 
-```plain
+```c++
 nsys profile -t cuda,nvtx,nvmedia,osrt --accelerator-trace=nvmedia  --show-output=true  /usr/src/tensorrt/bin/trtexec --loadEngine=alexnet_int8.plan --iterations=20
 ```
 
@@ -3702,7 +3729,7 @@ nsys profile -t cuda,nvtx,nvmedia,osrt --accelerator-trace=nvmedia  --show-outpu
 
 在移动平台上，GPU内存和CPU内存共享系统内存。在内存非常有限的设备上，如Nano，系统内存可能会因为大型网络而耗尽；即使所需的GPU内存小于系统内存。在这种情况下，增加系统交换空间的大小可以解决一些问题。下面是一个示例脚本：
 
-```plain
+```c++
 你是一名专业的翻译员。将其翻译为简体中文，不要修改任何现有的Markdown命令：echo "######alloc swap######"
 if [ ! -e /swapfile ];then
     sudo fallocate -l 4G /swapfile
@@ -3839,7 +3866,7 @@ TensorRT的enqueuev3()方法支持对不需要在管道中间与CPU进行交互�
 
 C++
 
-```plain
+```c++
 // 在输入形状发生变化后调用enqueueV3()一次以更新内部状态。
 context->enqueueV3(stream);
 
@@ -4036,7 +4063,7 @@ Q/DQ 节点帮助将 FP32 值转换为 INT8 值，反之亦然。这样的图仍
 
 如果我们有一个
 
-```plain
+```c++
 [DequantizeLinear（激活），DequantizeLinear（权重）] > 节点 >
         QuantizeLinear
 ```
@@ -4071,7 +4098,7 @@ Q/DQ 节点帮助将 FP32 值转换为 INT8 值，反之亦然。这样的图仍
 
 1. 启动CUDA MPS控制守护程序。
 
-   ```plain
+   ```c++
    nvidia-cuda-mps-control -d
    ```
 
@@ -4079,7 +4106,7 @@ Q/DQ 节点帮助将 FP32 值转换为 INT8 值，反之亦然。这样的图仍
 3. 构建网络引擎。
 4. 停止CUDA MPS控制守护程序。
 
-   ```plain
+   ```c++
    echo quit | nvidia-cuda-mps-control
    ```
 
@@ -4104,13 +4131,13 @@ Q/DQ 节点帮助将 FP32 值转换为 INT8 值，反之亦然。这样的图仍
 
 C++
 
-```plain
+```c++
 builderConfig->setAvgTimingIterations(8);
 ```
 
 Python
 
-```plain
+```c++
 Builder_config.avg_timing_iterations = 8
 ```
 
@@ -4257,7 +4284,7 @@ TensorRT可以根据构建器配置以FP32、FP16或INT8精度执行层。默认
 
 定时缓存可以进行序列化和反序列化。您可以使用IBuilderConfig::createTimingCache从缓冲区加载序列化的缓存：
 
-```plain
+```c++
 ITimingCache* cache = 
  config->createTimingCache(cacheFile.data(), cacheFile.size());
 ```
@@ -4266,20 +4293,20 @@ ITimingCache* cache =
 
 然后，在构建之前将缓存附加到构建器配置中。
 
-```plain
+```c++
 config->setTimingCache(*cache, false);
 ```
 
 在构建过程中，由于缓存未命中，定时缓存可以通过更多信息进行增强。构建完成后，可以将其序列化以供另一个构建器使用。
 
-```plain
+```c++
 IHostMemory* serializedCache = cache->serialize();
 ```
 
 如果构建器没有附加定时缓存，构建器会创建自己的临时本地缓存，并在完成后销毁该缓存。
 缓存与算法选择不兼容（参见[算法选择和可复现构建](#algorithm-select "TensorRT优化器的默认行为是选择全局最小化引擎执行时间的算法。它通过计时每个实现来实现此目标，并且有时，当实现具有相似的计时时，系统噪音可能决定在构建器的任何特定运行中选择哪个。不同的实现通常会使用不同的浮点值累积顺序，并且两个实现可能使用不同的算法，甚至以不同的精度运行。因此，构建器的不同调用通常不会产生返回位相同结果的引擎。")部分）。可以通过设置BuilderFlag来禁用它。
 
-```plain
+```c++
 config->setFlag(BuilderFlag::kDISABLE_TIMING_CACHE);
 ```
 
@@ -4288,7 +4315,7 @@ config->setFlag(BuilderFlag::kDISABLE_TIMING_CACHE);
 
 TensorRT允许基于启发式的策略选择来最小化层分析阶段的构建时间。构建器预测给定问题规模的策略时序，并在层分析阶段之前剪枝那些不太可能快速的策略。在预测错误的情况下，引擎的性能将不如基于分析的构建器构建的性能好。通过设置BuilderFlag可以启用此功能。
 
-```plain
+```c++
 config->setFlag(BuilderFlag::kENABLE_TACTIC_HEURISTIC);
 ```
 
@@ -4316,7 +4343,7 @@ config->setFlag(BuilderFlag::kENABLE_TACTIC_HEURISTIC);
 
 答：符号表中有一个名为tensorrt\_version\_#\_#\_#\_#的符号，其中包含TensorRT的版本号。在Linux上读取此符号的一种可能方法是使用nm命令，如下例所示：
 
-```plain
+```c++
 $ nm -D libnvinfer.so.* | grep tensorrt_version
 00000000abcd1234 B tensorrt_version_#_#_#_#
 ```
@@ -4336,7 +4363,7 @@ $ nm -D libnvinfer.so.* | grep tensorrt_version
 
 答：可以使用一系列的IElementWiseLayer在TensorRT中实现批量归一化。具体来说：
 
-```plain
+```c++
 adjustedScale = scale / sqrt(variance + epsilon) 
 batchNorm = (input + bias - (adjustedScale * mean)) * adjustedScale
 ```
@@ -4371,19 +4398,19 @@ A: 无重新格式化的网络I/O并不意味着整个网络中没有插入重�
 
 | 错误信息 | 描述 |
 | --- | --- |
-| ```plain<br>要求Scale层的输入至少具有3个维度。<br>``` | 此错误信息可能是由于输入维度不正确引起的。在UFF中，输入维度应始终在规范中不包括隐式的批次维度。 |
-| ```plain<br>无效的缩放模式，权重数：<X><br>``` |
-| ```plain<br>核心权重的数量为<X>，但期望值为<Y><br>``` |
-| ```plain<br><NODE>轴节点具有操作<OP>，但期望为Const。轴必须被指定为Const节点。<br>``` | 正如错误信息所示，为了使UFF正确解析节点，轴必须是构建时常数。 |
+| ```c++<br>要求Scale层的输入至少具有3个维度。<br>``` | 此错误信息可能是由于输入维度不正确引起的。在UFF中，输入维度应始终在规范中不包括隐式的批次维度。 |
+| ```c++<br>无效的缩放模式，权重数：<X><br>``` |
+| ```c++<br>核心权重的数量为<X>，但期望值为<Y><br>``` |
+| ```c++<br><NODE>轴节点具有操作<OP>，但期望为Const。轴必须被指定为Const节点。<br>``` | 正如错误信息所示，为了使UFF正确解析节点，轴必须是构建时常数。 |
 ### ONNX 解析器错误消息
 
 以下表格记录了常见的 ONNX 解析器错误消息。有关特定 ONNX 节点支持的更多信息，请参考[运算符支持](https://github.com/onnx/onnx/blob/main/docs/Operators.md)文档。
 
 | 错误消息 | 描述 |
 | --- | --- |
-| <X> 必须是一个初始化器！ | 这些错误消息表示在 TensorRT 中期望 ONNX 节点输入张量是一个初始化器。可能的修复方法是使用 TensorRT 的 [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/main/tools/Polygraphy) 工具对模型进行常量折叠：<br><br>```plain<br>polygraphy surgeon sanitize model.onnx --fold-constants --output model_folded.onnx<br>``` |
+| <X> 必须是一个初始化器！ | 这些错误消息表示在 TensorRT 中期望 ONNX 节点输入张量是一个初始化器。可能的修复方法是使用 TensorRT 的 [Polygraphy](https://github.com/NVIDIA/TensorRT/tree/main/tools/Polygraphy) 工具对模型进行常量折叠：<br><br>```c++<br>polygraphy surgeon sanitize model.onnx --fold-constants --output model_folded.onnx<br>``` |
 | !inputs.at(X).is\_weights() |
-| ```plain<br>getPluginCreator() 无法找到插件 <operator name> 版本<br>    1<br>``` | 这是一个错误，表示 ONNX 解析器没有为特定运算符定义导入函数，并且在加载的注册表中没有找到相应的插件。 |
+| ```c++<br>getPluginCreator() 无法找到插件 <operator name> 版本<br>    1<br>``` | 这是一个错误，表示 ONNX 解析器没有为特定运算符定义导入函数，并且在加载的注册表中没有找到相应的插件。 |
 ### TensorRT 核心库错误信息
 
 下表列出了常见的 TensorRT 核心库错误信息。
@@ -4391,20 +4418,20 @@ A: 无重新格式化的网络I/O并不意味着整个网络中没有插入重�
 |     | 错误信息 | 描述 |
 | --- | --- | --- |
 | **安装错误** | CUDA 初始化失败，错误代码为 <code>。请检查 CUDA 安装：[http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)。 | 如果 CUDA 或 NVIDIA 驱动程序安装损坏，可能会出现此错误信息。请参考链接中的说明，安装 CUDA 和 NVIDIA 驱动程序。 |
-| **构建器错误** | ```plain<br>内部错误：无法找到节点 <name> 的任何实现。请尝试使用 IBuilderConfig::setMemoryPoolLimit() 增加工作空间大小。<br>``` | 此错误信息是由于网络中给定节点的层实现无法使用给定的工作空间大小。这通常是因为工作空间大小不足，但也可能表示存在 bug。如果按照建议增加工作空间大小仍然无法解决问题，请报告 bug（参考[报告 TensorRT 问题](#reporting-issues)）。 |
-| <layer-name>: (kernel\|bias) 权重的非零计数但空值<br><br>```plain<br><layer-name>: (kernel\|bias) 权重的零计数但非空<br>    值<br>``` | 当传递给构建器的权重数据结构的值和计数字段不匹配时，会出现此错误信息。如果计数为 0，则值字段必须包含空指针；否则，计数必须为非零，并且值必须包含非空指针。 |
+| **构建器错误** | ```c++<br>内部错误：无法找到节点 <name> 的任何实现。请尝试使用 IBuilderConfig::setMemoryPoolLimit() 增加工作空间大小。<br>``` | 此错误信息是由于网络中给定节点的层实现无法使用给定的工作空间大小。这通常是因为工作空间大小不足，但也可能表示存在 bug。如果按照建议增加工作空间大小仍然无法解决问题，请报告 bug（参考[报告 TensorRT 问题](#reporting-issues)）。 |
+| <layer-name>: (kernel\|bias) 权重的非零计数但空值<br><br>```c++<br><layer-name>: (kernel\|bias) 权重的零计数但非空<br>    值<br>``` | 当传递给构建器的权重数据结构的值和计数字段不匹配时，会出现此错误信息。如果计数为 0，则值字段必须包含空指针；否则，计数必须为非零，并且值必须包含非空指针。 |
 | 构建器创建于与当前设备不同的设备上。 | 如果出现以下情况，可能会显示此错误信息：<br><br>1. 创建了一个针对一个 GPU 的 IBuilder，然后<br>2. 调用了 cudaSetDevice() 来针对另一个 GPU，然后<br>3. 尝试使用 IBuilder 创建引擎。<br><br>确保只在与创建 IBuilder 使用的 GPU 相同的 GPU 上使用 IBuilder。 |
 | 您可能会遇到错误消息，指示张量的维度与给定层的语义不匹配。仔细阅读[NvInfer.h](https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/c_api/namespacenvinfer1.html)上的文档，了解每个层的使用方法以及输入和输出张量的预期维度。 |     |
-| **INT8校准错误** | ```plain<br>张量<X>均匀为零。<br>``` | 当张量的数据分布均匀为零时，会出现此警告并应将其视为错误。在网络中，输出张量分布在以下情况下可能均匀为零：<br><br>1. 所有值为零的常量张量；不是错误。<br>2. 所有负输入的激活（ReLU）输出：不是错误。<br>3. 由于前一层的计算错误，数据分布被强制为全零；在此处发出警告。[1](#fntarg_1)<br>4. 用户没有提供任何校准图像；在此处发出警告。1 |
-|     | ```plain<br>找不到张量<X>的缩放因子。<br>``` | 此错误消息表示校准失败，未检测到缩放因子。这可能是由于没有INT8校准器或网络层的自定义缩放不足所导致的。有关更多信息，请参阅GitHub存储库中的opensource/sampleINT8目录中的[sampleINT8](https://github.com/NVIDIA/TensorRT/tree/main/samples/sampleINT8)，以正确设置校准。 |
-|     | ```plain<br>引擎计划文件与此版本的TensorRT不兼容，期望（格式\|库）版本<X>，得到<Y>，请重新构建。<br>``` | 如果您正在使用与当前TensorRT版本不兼容的引擎计划文件运行TensorRT，则可能会出现此错误消息。确保在生成引擎和运行引擎时使用相同版本的TensorRT。 |
-|     | ```plain<br>在不兼容的设备上生成了引擎计划文件，期望的计算能力为 <X>，实际的计算能力为 <Y>，请重新构建。<br>``` | 如果您在一个计算能力不同的设备上构建引擎，并在另一个设备上运行引擎，可能会出现此错误消息。|
-|     | ```plain<br>不推荐在不同型号的设备上使用同一个引擎计划文件，这可能会影响性能甚至导致错误。<br>``` | 如果您在一个与运行引擎的设备相同计算能力但不完全相同的设备上构建引擎，可能会出现此警告消息。<br><br>如警告所示，强烈建议在生成引擎和部署引擎时使用相同型号的设备，以避免兼容性问题。|
-|     | ```plain<br>在初始化 (张量\|层) 时，GPU 内存分配失败： <名称><br>GPU 内存不足<br>``` | 如果没有足够的 GPU 内存来实例化给定的 TensorRT 引擎，可能会出现这些错误消息。请验证 GPU 是否有足够的可用内存来容纳所需的层权重和激活张量。|
-|     | ```plain<br>在反序列化权重时分配失败。<br>``` |
-|     | ```plain<br>GPU 不满足运行此引擎的最低内存要求...<br>``` |
-|     | ```plain<br>网络需要本机 FP16，但平台不支持本机 FP16<br>``` | 如果您尝试在不支持 FP16 运算的 GPU 上反序列化使用 FP16 算术的引擎，可能会出现此错误消息。您可以选择重新构建引擎，不使用 FP16 精度推理，或者升级 GPU 到支持 FP16 精度推理的型号。|
-|     | ```plain<br>Custom layer <name> returned non-zero initialization<br>``` | 如果给定的插件层的initialize()方法返回非零值，则可能会出现此错误消息。请参考该层的实现以进一步调试此错误。有关更多信息，请参阅[TensorRT运算符参考](https://docs.nvidia.com/deeplearning/tensorrt/operators/docs/index.html)。 |
+| **INT8校准错误** | ```c++<br>张量<X>均匀为零。<br>``` | 当张量的数据分布均匀为零时，会出现此警告并应将其视为错误。在网络中，输出张量分布在以下情况下可能均匀为零：<br><br>1. 所有值为零的常量张量；不是错误。<br>2. 所有负输入的激活（ReLU）输出：不是错误。<br>3. 由于前一层的计算错误，数据分布被强制为全零；在此处发出警告。[1](#fntarg_1)<br>4. 用户没有提供任何校准图像；在此处发出警告。1 |
+|     | ```c++<br>找不到张量<X>的缩放因子。<br>``` | 此错误消息表示校准失败，未检测到缩放因子。这可能是由于没有INT8校准器或网络层的自定义缩放不足所导致的。有关更多信息，请参阅GitHub存储库中的opensource/sampleINT8目录中的[sampleINT8](https://github.com/NVIDIA/TensorRT/tree/main/samples/sampleINT8)，以正确设置校准。 |
+|     | ```c++<br>引擎计划文件与此版本的TensorRT不兼容，期望（格式\|库）版本<X>，得到<Y>，请重新构建。<br>``` | 如果您正在使用与当前TensorRT版本不兼容的引擎计划文件运行TensorRT，则可能会出现此错误消息。确保在生成引擎和运行引擎时使用相同版本的TensorRT。 |
+|     | ```c++<br>在不兼容的设备上生成了引擎计划文件，期望的计算能力为 <X>，实际的计算能力为 <Y>，请重新构建。<br>``` | 如果您在一个计算能力不同的设备上构建引擎，并在另一个设备上运行引擎，可能会出现此错误消息。|
+|     | ```c++<br>不推荐在不同型号的设备上使用同一个引擎计划文件，这可能会影响性能甚至导致错误。<br>``` | 如果您在一个与运行引擎的设备相同计算能力但不完全相同的设备上构建引擎，可能会出现此警告消息。<br><br>如警告所示，强烈建议在生成引擎和部署引擎时使用相同型号的设备，以避免兼容性问题。|
+|     | ```c++<br>在初始化 (张量\|层) 时，GPU 内存分配失败： <名称><br>GPU 内存不足<br>``` | 如果没有足够的 GPU 内存来实例化给定的 TensorRT 引擎，可能会出现这些错误消息。请验证 GPU 是否有足够的可用内存来容纳所需的层权重和激活张量。|
+|     | ```c++<br>在反序列化权重时分配失败。<br>``` |
+|     | ```c++<br>GPU 不满足运行此引擎的最低内存要求...<br>``` |
+|     | ```c++<br>网络需要本机 FP16，但平台不支持本机 FP16<br>``` | 如果您尝试在不支持 FP16 运算的 GPU 上反序列化使用 FP16 算术的引擎，可能会出现此错误消息。您可以选择重新构建引擎，不使用 FP16 精度推理，或者升级 GPU 到支持 FP16 精度推理的型号。|
+|     | ```c++<br>Custom layer <name> returned non-zero initialization<br>``` | 如果给定的插件层的initialize()方法返回非零值，则可能会出现此错误消息。请参考该层的实现以进一步调试此错误。有关更多信息，请参阅[TensorRT运算符参考](https://docs.nvidia.com/deeplearning/tensorrt/operators/docs/index.html)。 |
 ### [14.3. 代码分析工具](#code-analysis-tools-ovr)
 ### [14.3.1. 编译器消毒剂](#compiler-sanitizers)
 
@@ -4419,13 +4446,13 @@ Google消毒剂是一套[代码分析工具](https://github.com/google/sanitizer
 
 当使用多个线程从dlopen中调用时，线程检测器可以列出错误。为了抑制此警告，创建一个名为tsan.supp的文件，并将以下内容添加到文件中：
 
-```plain
+```c++
 race::dlopen
 ```
 
 在使用线程检测器运行应用程序时，使用以下命令设置环境变量：
 
-```plain
+```c++
 export TSAN_OPTIONS=”suppressions=tsan.supp”
 ```
 ### [14.3.1.3. CUDA和地址消毒器的问题](#issues-cuda-address-sanitizer)
@@ -4442,7 +4469,7 @@ export TSAN_OPTIONS=”suppressions=tsan.supp”
 
 某些版本的 valgrind 和 glibc 受到一个[错误](https://stackoverflow.com/questions/1542457/memory-leak-reported-by-valgrind-in-dlopen)的影响，当使用 dlopen 时会导致错误的内存泄漏被报告，这可能在使用 valgrind 的 memcheck 工具运行 TensorRT 应用程序时产生虚假错误。为了解决这个问题，请按照[这里](https://valgrind.org/docs/manual/manual-core.html#manual-core.suppress)的文档将以下内容添加到 valgrind 的抑制文件中：
 
-```plain
+```c++
 {
    Memory leak errors with dlopen
    Memcheck:Leak
@@ -4461,25 +4488,25 @@ export TSAN_OPTIONS=”suppressions=tsan.supp”
 
 在TensorRT的日志中，格式被打印为类型后跟步长和向量化信息。例如：
 
-```plain
+```c++
 Half(60,1:8,12,3)
 ```
 
 Half表示元素类型为DataType::kHALF，即16位浮点数。:8表示格式每个向量中打包了八个元素，并且向量化沿第二个轴进行。其余的数字是以向量为单位的步长。对于这个张量，坐标(n,c,h,w)到地址的映射是：
 
-```plain
+```c++
 ((half*)base_address) + (60*n + 1*floor(c/8) + 12*h + 3*w) * 8 + (c mod 8)
 ```
 
 1:对于NHWC格式是常见的。例如，这是另一个NCHW格式的例子：
 
-```plain
+```c++
 Int8(105,15:4,3,1)
 ```
 
 INT8表示元素类型为DataType::kINT8，:4表示向量大小为4。对于这个张量，坐标(n,c,h,w)到地址的映射是：
 
-```plain
+```c++
 (int8_t*)base_address + (105*n + 15*floor(c/4) + 3*h + w) * 4 + (c mod 4)
 ```
 
@@ -4487,7 +4514,7 @@ INT8表示元素类型为DataType::kINT8，:4表示向量大小为4。对于这�
 
 一般来说，坐标到地址的映射具有以下形式：
 
-```plain
+```c++
 (type*)base_address + (vec_coordinate · strides) * vec_size + vec_mod
 ```
 
@@ -4501,7 +4528,7 @@ INT8表示元素类型为DataType::kINT8，:4表示向量大小为4。对于这�
 
 如果在使用TensorRT时遇到问题，请首先确认是否按照开发者指南中的说明进行操作。此外，请检查[常见问题解答](#常见问题 "本部分旨在帮助排除问题并回答我们经常遇到的问题。")和[理解错误消息](#错误消息 "如果在执行过程中遇到错误，TensorRT会报告一条错误消息，旨在帮助调试问题。以下部分讨论了开发者可能遇到的一些常见错误消息。")部分，查找类似的失败模式。例如，许多引擎构建失败可以通过使用[Polygraphy](https://github.com/NVIDIA/TensorRT/tree/main/tools/Polygraphy)对ONNX模型进行消毒和常数折叠来解决，具体命令如下：
 
-```plain
+```c++
 polygraphy surgeon sanitize model.onnx --fold-constants --output
         model_folded.onnx
 ```
@@ -4565,13 +4592,13 @@ Polygraphy可以帮助您诊断使用降低精度时的常见问题。有关更�
 
 如果您要报告性能问题，请使用以下命令共享完整的 trtexec 日志：
 
-```plain
+```c++
 trtexec --onnx=<onnx_file> <precision_and_shape_flags> --verbose --profilingVerbosity=detailed --dumpLayerInfo --dumpProfile --separateProfileRun --useCudaGraph --noDataTransfers --useSpinWait --duration=60
 ```
 
 详细的日志可以帮助我们确定性能问题。如果可能的话，还请使用以下命令共享[Nsight Systems](https://developer.nvidia.com/nsight-systems)性能分析文件：
 
-```plain
+```c++
 trtexec --onnx=<onnx_file> <precision_and_shape_flags> --verbose --profilingVerbosity=detailed --dumpLayerInfo --saveEngine=<engine_path>
 nsys profile -o <output_profile> trtexec --loadEngine=<engine_path> <precision_and_shape_flags> --noDataTransfers --useSpinWait --warmUp=0 --duration=0 --iterations=20
 ```
@@ -4622,7 +4649,7 @@ TensorRT支持不同的数据格式。有两个方面需要考虑：数据类型
 
 为了最大化GPU利用率，trtexec提前将查询排队一个批次。换句话说，它执行以下操作：
 
-```plain
+```c++
 排队批次0 -> 排队批次1 -> 等待批次0完成 -> 排队批次2 -> 等待批次1完成 -> 排队批次3 -> 等待批次2完成 -> 排队批次4 -> ...
 ```
 
@@ -5073,5 +5100,3 @@ NVIDIA、NVIDIA标志、BlueField、CUDA、DALI、DRIVE、Hopper、JetPack、Jet
 © 2017\-2023 NVIDIA Corporation及其关联公司。保留所有权利。
 
 [1](#fnsrc_1)**建议评估校准输入或验证前一层的输出。**](../../../../7-office/11-sync/Obsidian/9-web-clippings/TensorRT8.5.3/readme.md)
-=======
->>>>>>> cf4c1eb7fda239e895ef4e169c2b70f9e1497344
