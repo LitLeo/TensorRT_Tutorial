@@ -1,4 +1,8 @@
-[# 开发者指南 :: NVIDIA深度学习TensorRT文档## [修订历史](#revision-history)
+
+# 开发者指南 :: NVIDIA深度学习TensorRT文档
+
+## [修订历史](#revision-history)
+
 
 这是《NVIDIA TensorRT 8.5 开发者指南》的修订历史。
 ## 第三章 更新
@@ -299,6 +303,7 @@ Polygraphy是一个旨在帮助在TensorRT和其他框架中运行和调试深�
 *   隔离TensorRT中的故障策略（例如[CLI](https://github.com/NVIDIA/TensorRT/blob/main/tools/Polygraphy/examples/cli/debug/01_debugging_flaky_trt_tactics)）。
 
 有关更多详细信息，请参阅[Polygraphy存储库](https://github.com/NVIDIA/TensorRT/tree/main/tools/Polygraphy)。
+<<<<<<< HEAD
 
 
 ## [3. C++ API](#c_topics)
@@ -5068,3 +5073,5 @@ NVIDIA、NVIDIA标志、BlueField、CUDA、DALI、DRIVE、Hopper、JetPack、Jet
 © 2017\-2023 NVIDIA Corporation及其关联公司。保留所有权利。
 
 [1](#fnsrc_1)**建议评估校准输入或验证前一层的输出。**](../../../../7-office/11-sync/Obsidian/9-web-clippings/TensorRT8.5.3/readme.md)
+=======
+>>>>>>> cf4c1eb7fda239e895ef4e169c2b70f9e1497344
