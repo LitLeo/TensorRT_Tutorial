@@ -887,6 +887,7 @@ auto relu1 = network->addActivation(*ip1->getOutput(0), ActivationType::kRELU);
 添加SoftMax层以计算最终概率：
 ```c++
 auto prob = network->addSoftMax(*relu1->getOutput(0));
+```
 
 为SoftMax层的输出添加一个名称，以便在推理时将张量绑定到内存缓冲区：
 ```c++
@@ -899,6 +900,7 @@ network->markOutput(*prob->getOutput(0));
 ```
 
 MNIST模型的网络已经完全构建完成。请参考[构建引擎](#build_engine_c "下一步是创建一个构建配置，指定TensorRT如何优化模型。")和[反序列化计划](#perform_inference_c "假设您之前已经序列化了一个优化模型并且想要进行推理，您必须创建一个运行时接口的实例。与构建器一样，运行时需要一个日志记录器的实例：")部分，了解如何构建引擎并使用该网络进行推理。
+
 ### [6.3.2. Python](#create_network_python)
 
 可以在[network_api_pytorch_mnist](https://github.com/NVIDIA/TensorRT/tree/main/samples/python/network_api_pytorch_mnist)中找到与本节对应的代码。
@@ -1484,7 +1486,7 @@ ONNX使用显式量化表示-当PyTorch或TensorFlow中的模型导出为ONNX时
 | 用户对精度的控制 | 控制较少：INT8在加速性能的所有内核中使用。 | 对量化/去量化边界有完全控制。 |
 | 优化准则 | 优化性能。 | 在保持算术精度（准确性）的同时优化性能。 |
 | API | *   模型+尺度（动态范围API）<br>*   模型+校准数据 | 带有Q/DQ层的模型。 |
-| 量化尺度 | 权重：<br><br>*   由TensorRT设置（内部）<br>*   范围\[-127，127\]<br><br>激活：<br><br>*   由校准设置或用户指定<br>*   范围\[-128，127\] | 权重和激活：<br><br>*   使用Q/DQ ONNX运算符指定<br>*   范围\[-128，127\] |
+| 量化尺度 | 权重：<br><br>*   由TensorRT设置（内部）<br>*   范围[-127，127]<br><br>激活：<br><br>*   由校准设置或用户指定<br>*   范围[-128，127] | 权重和激活：<br><br>*   使用Q/DQ ONNX运算符指定<br>*   范围[-128，127] |
 
 有关量化的更多背景信息，请参阅《整数量化用于深度学习推理：原理和实证评估》论文。
 ### [7.1.3. 每张量和每通道量化](#quantize-scale-values)
@@ -1506,7 +1508,7 @@ ONNX使用显式量化表示-当PyTorch或TensorFlow中的模型导出为ONNX时
                 output[k,c,r,s] := clamp(round(input[k,c,r,s] / scale[k]))
 ```
 
-比例是一个系数向量，必须与量化轴具有相同的大小。量化比例必须由所有正浮点系数组成。舍入方法是[四舍五入到最近的偶数](https://en.wikipedia.org/wiki/Rounding#Round_half_to_even)，并且夹紧范围为\[-128, 127\]。
+比例是一个系数向量，必须与量化轴具有相同的大小。量化比例必须由所有正浮点系数组成。舍入方法是[四舍五入到最近的偶数](https://en.wikipedia.org/wiki/Rounding#Round_half_to_even)，并且夹紧范围为[-128, 127]。
 
 反量化的操作类似，只是定义了逐点操作：
 
@@ -1855,7 +1857,7 @@ Python
 network_definition.add_input("foo", trt.float32, (3, -1, -1))
 ```
 
-在运行时，在选择优化配置文件后，必须设置输入维度（请参阅[优化配置文件](#opt_profiles "优化配置文件描述每个网络输入的维度范围以及自动调谐器用于优化的维度。使用运行时维度时，必须在构建时创建至少一个优化配置文件。两个配置文件可以指定不相交或重叠的范围。")）。假设输入foo的绑定索引为0，并且输入维度为\[3,150,250\]。在为上一个示例设置优化配置文件后，您将调用：
+在运行时，在选择优化配置文件后，必须设置输入维度（请参阅[优化配置文件](#opt_profiles "优化配置文件描述每个网络输入的维度范围以及自动调谐器用于优化的维度。使用运行时维度时，必须在构建时创建至少一个优化配置文件。两个配置文件可以指定不相交或重叠的范围。")）。假设输入foo的绑定索引为0，并且输入维度为[3,150,250]。在为上一个示例设置优化配置文件后，您将调用：
 
 C++
 
@@ -1902,8 +1904,8 @@ gLogError << "无效的网络输出，这可能是由于输入形状不一致引
 
 常量和运行时维度都可以被命名。命名维度有两个好处：
 
-*   对于运行时维度，错误消息使用维度的名称。例如，如果一个输入张量 foo 的维度是 \[n,10,m\]，那么得到一个关于 m 的错误消息比得到一个关于 (#2 (SHAPE foo)) 的错误消息更有帮助。
-*   具有相同名称的维度被隐式视为相等，这有助于优化器生成更高效的引擎，并在运行时诊断不匹配的维度。例如，如果两个输入具有维度 \[n,10,m\] 和 \[n,13\]，优化器知道前导维度始终相等，并且在意外使用具有不匹配 n 值的引擎时将报告错误。
+*   对于运行时维度，错误消息使用维度的名称。例如，如果一个输入张量 foo 的维度是 [n,10,m]，那么得到一个关于 m 的错误消息比得到一个关于 (#2 (SHAPE foo)) 的错误消息更有帮助。
+*   具有相同名称的维度被隐式视为相等，这有助于优化器生成更高效的引擎，并在运行时诊断不匹配的维度。例如，如果两个输入具有维度 [n,10,m] 和 [n,13]，优化器知道前导维度始终相等，并且在意外使用具有不匹配 n 值的引擎时将报告错误。
 
 只要在运行时它们始终相等，您可以为常量和运行时维度使用相同的名称。
 
@@ -1938,7 +1940,7 @@ tensor.get_dimension_name(2) 返回张量的第三个维度的名称，如果没
 
 _优化配置文件_描述了每个网络输入的维度范围以及自动调谐器用于优化的维度。当使用运行时维度时，您必须在构建时创建至少一个优化配置文件。两个配置文件可以指定不相交或重叠的范围。
 
-例如，一个配置文件可能指定最小尺寸为\[3,100,200\]，最大尺寸为\[3,200,300\]，优化维度为\[3,150,250\]，而另一个配置文件可能指定最小、最大和优化维度为\[3,200,100\]、\[3,300,400\]和\[3,250,250\]。
+例如，一个配置文件可能指定最小尺寸为[3,100,200]，最大尺寸为[3,200,300]，优化维度为[3,150,250]，而另一个配置文件可能指定最小、最大和优化维度为[3,200,100]、[3,300,400]和[3,250,250]。
 
 要创建一个优化配置文件，首先构建一个IOptimizationProfile。然后设置最小、优化和最大维度，并将其添加到网络配置中。优化配置文件定义的形状必须为网络定义有效的输入形状。以下是对于前面提到的第一个配置文件的调用，针对名为foo的输入：
 
@@ -2112,9 +2114,9 @@ public:
 
 如果使用enqueueV3而不是已弃用的enqueueV2，可以跳过此部分，因为基于名称的方法（如IExecutionContext::setTensorAddress）不需要配置文件后缀。
 
-在由多个优化配置文件构建的引擎中，每个配置文件都有单独的绑定索引。对于第_K_个配置文件的输入/输出张量，它们的名称会在后面附加\[profile _K_\]，其中_K_以十进制形式表示。例如，如果INetworkDefinition的名称为“foo”，并且bindingIndex引用了具有索引3的优化配置文件中的张量，则engine.getBindingName(bindingIndex)会返回“foo \[profile 3\]”。
+在由多个优化配置文件构建的引擎中，每个配置文件都有单独的绑定索引。对于第_K_个配置文件的输入/输出张量，它们的名称会在后面附加[profile _K_]，其中_K_以十进制形式表示。例如，如果INetworkDefinition的名称为“foo”，并且bindingIndex引用了具有索引3的优化配置文件中的张量，则engine.getBindingName(bindingIndex)会返回“foo [profile 3]”。
 
-同样，如果使用ICudaEngine::getBindingIndex(name)来获取第_K_个配置文件（_K>0_）中的索引，需要在INetworkDefinition中使用的名称后面附加“\[profile _K_\]”。例如，如果在INetworkDefinition中张量的名称为“foo”，则engine.getBindingIndex(“foo \[profile 3\]“)会返回优化配置文件3中张量“foo”的绑定索引。
+同样，如果使用ICudaEngine::getBindingIndex(name)来获取第_K_个配置文件（_K>0_）中的索引，需要在INetworkDefinition中使用的名称后面附加“[profile _K_]”。例如，如果在INetworkDefinition中张量的名称为“foo”，则engine.getBindingIndex(“foo [profile 3]“)会返回优化配置文件3中张量“foo”的绑定索引。
 
 对于_K=0_，始终省略后缀。
 ### [8.4.2. 多个优化配置的绑定](#opt_profiles_bindings)
@@ -2138,7 +2140,7 @@ public:
 
 一些层具有可选输入，允许指定动态形状信息，并且有一个新的层IShapeLayer用于在运行时访问张量的形状。此外，一些层允许计算新的形状。下一节将详细介绍语义细节和限制。以下是与动态形状结合使用时可能有用的摘要。
 
-IShapeLayer输出一个包含输入张量的维度的一维张量。例如，如果输入张量的维度为\[2,3,5,7\]，则输出张量是一个包含{2,3,5,7}的四个元素的一维张量。如果输入张量是一个标量，它的维度为\[\]，输出张量是一个包含{}的零元素一维张量。
+IShapeLayer输出一个包含输入张量的维度的一维张量。例如，如果输入张量的维度为[2,3,5,7]，则输出张量是一个包含{2,3,5,7}的四个元素的一维张量。如果输入张量是一个标量，它的维度为[]，输出张量是一个包含{}的零元素一维张量。
 
 IResizeLayer接受一个可选的第二个输入，其中包含输出的所需维度。
 
@@ -2335,6 +2337,7 @@ TensorRT包含可以加载到应用程序中的插件。有关开源插件的列
 | [IPluginV2Ext](https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/c_api/classnvinfer1_1_1_i_plugin_v2_ext.html) | 5.1 | 有限 | 否 | 隐式和显式批处理模式 |
 | [IPluginV2IOExt](https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/c_api/classnvinfer1_1_1_i_plugin_v2_i_o_ext.html) | 6.0.1 | 通用 | 否 | 隐式和显式批处理模式 |
 | [IPluginV2DynamicExt](https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/c_api/classnvinfer1_1_1_i_plugin_v2_dynamic_ext.html) | 6.0.1 | 通用 | 是 | 仅显式批处理模式 |
+
 为了在网络中使用插件，您必须先在TensorRT的PluginRegistry（[C++](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_plugin_registry.html)，[Python](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Plugin/IPluginRegistry.html)）中注册它。与直接注册插件不同，您需要注册一个派生自PluginCreator的插件工厂类的实例。插件创建者类还提供有关插件的其他信息：名称、版本和插件字段参数。
 
 有两种方法可以将插件注册到注册表中：
@@ -2749,7 +2752,7 @@ TensorRT允许在隐式批处理模式或显式批处理模式下创建网络（
 
 TensorRT插件API不支持直接将形状张量输入到插件，也不支持直接输出。然而，可以通过使用空张量来解决此限制。使用一个带有感兴趣的维度和零维度的虚拟输入张量，使得输入几乎不占用空间。
 
-例如，假设一个插件必须知道一个2个元素的一维形状张量_value_ \[_P_,_Q_\]，以计算其输出的形状，例如，实现IPluginV2DynamicExt::getOutputDimensions。不要传递形状张量\[_P,Q_\]，而是设计插件具有虚拟输入，该输入是一个具有_dimensions_ \[0,_P_,_Q_\]的执行张量。TensorRT将告诉插件虚拟输入的维度，从中插件可以提取出\[_P_,_Q_\]。由于张量是空的，它只会占用极少的空间，足够给它一个独特的地址。
+例如，假设一个插件必须知道一个2个元素的一维形状张量_value_ [_P_,_Q_]，以计算其输出的形状，例如，实现IPluginV2DynamicExt::getOutputDimensions。不要传递形状张量[_P,Q_]，而是设计插件具有虚拟输入，该输入是一个具有_dimensions_ [0,_P_,_Q_]的执行张量。TensorRT将告诉插件虚拟输入的维度，从中插件可以提取出[_P_,_Q_]。由于张量是空的，它只会占用极少的空间，足够给它一个独特的地址。
 
 在网络中，可以通过使用零步长切片或重塑空张量来创建虚拟输入张量。以下是使用零步长切片的方法：
 
@@ -2875,7 +2878,7 @@ TensorRT具有应用语义学，意味着除了引擎的输入和输出之外，
 
 形式语义学基于张量的“惰性序列”。循环的每次迭代对应于序列中的一个元素。循环内部张量_X_的序列表示为⟨_X_0, _X_1, _X_2, ...⟩。序列的元素是惰性求值的，即按需求进行求值。
 
-IIteratorLayer(X)的输出是⟨X\[0\], X\[1\], X\[2\], ...⟩，其中X\[i\]表示对IIteratorLayer指定的轴进行下标操作。
+IIteratorLayer(X)的输出是⟨X[0], X[1], X[2], ...⟩，其中X[i]表示对IIteratorLayer指定的轴进行下标操作。
 
 IRecurrenceLayer(X,Y)的输出是⟨X, Y0, Y1, Y2, ...⟩。
 
@@ -2904,7 +2907,7 @@ TensorRT拒绝循环嵌套不清晰的网络，例如如果循环A使用在循�
 
 一个引用了多个动态维度的循环可能会占用意外的大量内存。
 
-在循环中，内存分配的方式是假设所有动态维度都取最大值。例如，如果一个循环引用了具有维度\[4,x,y\]和\[6,y\]的两个张量，那么这些张量的内存分配就相当于它们的维度是\[4,max(x,y),max(x,y)\]和\[6,max(x,y)\]。
+在循环中，内存分配的方式是假设所有动态维度都取最大值。例如，如果一个循环引用了具有维度[4,x,y]和[6,y]的两个张量，那么这些张量的内存分配就相当于它们的维度是[4,max(x,y),max(x,y)]和[6,max(x,y)]。
 
 使用kLAST\_VALUE的LoopOutputLayer的输入必须是IRecurrenceLayer的输出。
 
@@ -3321,34 +3324,34 @@ cuDLA 透明地处理共享缓冲区的管理以及 GPU 和 DLA 之间的任务�
 
 *   仅支持两个空间维度的操作。
 *   支持FP16和INT8。
-*   卷积核大小的每个维度必须在\[1, 32\]范围内。
-*   填充必须在\[0, 31\]范围内。
+*   卷积核大小的每个维度必须在[1, 32]范围内。
+*   填充必须在[0, 31]范围内。
 *   填充的维度必须小于相应的卷积核维度。
-*   步长的维度必须在\[1, 8\]范围内。
-*   输出映射的数量必须在\[1, 8192\]范围内。
-*   使用TensorFormat::kLINEAR、TensorFormat::kCHW16和TensorFormat::kCHW32格式的操作的组数必须在\[1, 8192\]范围内。
-*   使用TensorFormat::kDLA\_HWC4格式的操作的组数必须在\[1, 4\]范围内。
-*   扩张卷积必须在\[1, 32\]范围内。
+*   步长的维度必须在[1, 8]范围内。
+*   输出映射的数量必须在[1, 8192]范围内。
+*   使用TensorFormat::kLINEAR、TensorFormat::kCHW16和TensorFormat::kCHW32格式的操作的组数必须在[1, 8192]范围内。
+*   使用TensorFormat::kDLA_HWC4格式的操作的组数必须在[1, 4]范围内。
+*   扩张卷积必须在[1, 32]范围内。
 *   如果CBUF大小需求wtBanksForOneKernel + minDataBanks超过numConvBufBankAllotted限制16，则不支持操作。CBUF是存储输入权重和激活函数的内部卷积缓存，wtBanksForOneKernel是存储卷积所需的最小权重/卷积核元素的最小银行数，minDataBanks是存储卷积所需的最小激活数据的最小银行数。当卷积层由于CBUF约束而无法通过验证时，详细信息将显示在日志输出中。
 #### 反卷积层
 
 *   仅支持两个空间维度。
 *   支持FP16和INT8。
-*   核的维度必须在\[1, 32\]范围内，另外还包括1x\[64, 96, 128\]和\[64, 96, 128\]x1。
-*   TensorRT在DLA上禁用了范围在\[23 - 32\]的反卷积方形核和步长，因为它们会显著减慢编译速度。
+*   核的维度必须在[1, 32]范围内，另外还包括1x[64, 96, 128]和[64, 96, 128]x1。
+*   TensorRT在DLA上禁用了范围在[23 - 32]的反卷积方形核和步长，因为它们会显著减慢编译速度。
 *   填充必须为0。
 *   分组反卷积必须为1。
 *   膨胀反卷积必须为1。
-*   输入通道数必须在\[1, 8192\]范围内。
-*   输出通道数必须在\[1, 8192\]范围内。
+*   输入通道数必须在[1, 8192]范围内。
+*   输出通道数必须在[1, 8192]范围内。
 #### 池化层
 
 *   仅支持两个空间维度的操作。
 *   支持FP16和INT8。
 *   支持的操作：kMAX，kAVERAGE。
-*   窗口的尺寸必须在\[1, 8\]范围内。
-*   填充的尺寸必须在\[0, 7\]范围内。
-*   步长的尺寸必须在\[1, 16\]范围内。
+*   窗口的尺寸必须在[1, 8]范围内。
+*   填充的尺寸必须在[0, 7]范围内。
+*   步长的尺寸必须在[1, 16]范围内。
 *   在INT8模式下，输入和输出张量的尺度必须相同。
 #### 激活层
 
@@ -3356,7 +3359,7 @@ cuDLA 透明地处理共享缓冲区的管理以及 GPU 和 DLA 之间的任务�
 *   支持FP16和INT8。
 *   支持的函数：ReLU、Sigmoid、TanH、Clipped ReLU和Leaky ReLU。
     *   ReLU不支持负斜率。
-    *   Clipped ReLU仅支持范围在\[1, 127\]内的值。
+    *   Clipped ReLU仅支持范围在[1, 127]内的值。
     *   TanH、Sigmoid INT8支持通过自动升级为FP16来实现。
 #### 参数化ReLU层
 
@@ -3400,7 +3403,7 @@ cuDLA 透明地处理共享缓冲区的管理以及 GPU 和 DLA 之间的任务�
 
 *   尺度数必须为4。
 *   尺度中的前两个元素必须为1（用于保持批次和通道维度不变）。
-*   尺度中的后两个元素分别表示高度和宽度维度上的比例值，必须为整数，范围在\[1, 32\]之间，使用最近邻模式；或者范围在\[1, 4\]之间，使用双线性模式。
+*   尺度中的后两个元素分别表示高度和宽度维度上的比例值，必须为整数，范围在[1, 32]之间，使用最近邻模式；或者范围在[1, 4]之间，使用双线性模式。
 #### 一元层
 
 *   仅支持绝对值操作。
@@ -3408,13 +3411,13 @@ cuDLA 透明地处理共享缓冲区的管理以及 GPU 和 DLA 之间的任务�
 
 *   仅支持FP16精度。
 *   支持批处理大小最多为通用DLA最大值。
-*   所有非批处理维度的输入必须在\[1, 8192\]范围内。
+*   所有非批处理维度的输入必须在[1, 8192]范围内。
 *   仅支持4-D输入和在CHW维度上进行切片。
 *   仅支持静态切片，因此切片参数必须以静态方式提供，可以使用TensorRT ISliceLayer设置器API或作为常量输入张量。
 #### SoftMax层
 
 *   仅支持NVIDIA Orin™，不支持Xavier™。
-*   所有输入的非批次维度必须在\[1, 8192\]范围内。
+*   所有输入的非批次维度必须在[1, 8192]范围内。
 *   仅支持FP16精度。
 *   在内部，有两种模式，根据给定的输入张量形状选择模式。
     *   当所有非批次、非轴维度为1时，触发准确模式。
@@ -3422,7 +3425,7 @@ cuDLA 透明地处理共享缓冲区的管理以及 GPU 和 DLA 之间的任务�
 #### Shuffle层
 
 *   仅支持4维输入张量。
-*   所有非批量维度必须在\[1, 8192\]范围内。
+*   所有非批量维度必须在[1, 8192]范围内。
 *   请注意，DLA将该层分解为独立的转置和重塑操作。这意味着上述限制分别适用于每个分解操作。
 *   批量维度不能参与重塑或转置操作。
 ### [12.2.3. NVIDIA Orin 上的推断](#推断-orin)
@@ -3445,20 +3448,20 @@ GPU 回退模式设置构建器在 DLA 上无法运行的层时使用 GPU。由�
 
 DLA支持设备独有的格式，并且由于矢量宽度字节要求的限制，对其布局有约束。
 
-对于DLA输入张量，支持kDLA\_LINEAR(FP16, INT8)，kDLA\_HWC4(FP16, INT8)，kCHW16(FP16)和kCHW32(INT8)格式。对于DLA输出张量，仅支持kDLA\_LINEAR(FP16, INT8)，kCHW16(FP16)和kCHW32(INT8)格式。对于kCHW16和kCHW32格式，如果C不是整数倍数，则必须填充到下一个32字节边界。
+对于DLA输入张量，支持kDLA_LINEAR(FP16, INT8)，kDLA_HWC4(FP16, INT8)，kCHW16(FP16)和kCHW32(INT8)格式。对于DLA输出张量，仅支持kDLA_LINEAR(FP16, INT8)，kCHW16(FP16)和kCHW32(INT8)格式。对于kCHW16和kCHW32格式，如果C不是整数倍数，则必须填充到下一个32字节边界。
 
-对于kDLA\_LINEAR格式，沿W维度的步幅必须填充到64字节。内存格式相当于具有维度\[N\]\[C\]\[H\]\[roundUp(W, 64/elementSize)\]的C数组，其中elementSize为FP16时为2，Int8时为1，张量坐标(n, c, h, w)映射到数组下标\[n\]\[c\]\[h\]\[w\]。
+对于kDLA_LINEAR格式，沿W维度的步幅必须填充到64字节。内存格式相当于具有维度[N][C][H][roundUp(W, 64/elementSize)]的C数组，其中elementSize为FP16时为2，Int8时为1，张量坐标(n, c, h, w)映射到数组下标[n][c][h][w]。
 
-对于kDLA\_HWC4格式，在Xavier上，沿W维度的步幅必须是32字节的倍数，在NVIDIA Orin上必须是64字节的倍数。
+对于kDLA_HWC4格式，在Xavier上，沿W维度的步幅必须是32字节的倍数，在NVIDIA Orin上必须是64字节的倍数。
 
 *   当C == 1时，TensorRT将该格式映射到本机灰度图像格式。
 *   当C == 3或C == 4时，它映射到本机彩色图像格式。如果C == 3，则沿W轴的步幅必须填充为4个元素。
     
     在这种情况下，填充的通道位于第4索引处。理想情况下，填充值不重要，因为DLA编译器会将权重的第4个通道填充为零；但是，应用程序可以安全地分配一个四通道的零填充缓冲区，并填充三个有效通道。
     
-*   当C为{1, 3, 4}时，填充后的C'分别为{1, 4, 4}，内存布局相当于具有维度\[N\]\[H\]\[roundUp(W, 32/C'/elementSize)\]\[C'\]的C数组，其中elementSize为FP16时为2，Int8时为1。张量坐标(n, c, h, w)映射到数组下标\[n\]\[h\]\[w\]\[c\]，roundUp计算大于或等于W的最小64/elementSize的倍数。
+*   当C为{1, 3, 4}时，填充后的C'分别为{1, 4, 4}，内存布局相当于具有维度[N][H][roundUp(W, 32/C'/elementSize)][C']的C数组，其中elementSize为FP16时为2，Int8时为1。张量坐标(n, c, h, w)映射到数组下标[n][h][w][c]，roundUp计算大于或等于W的最小64/elementSize的倍数。
 
-当使用kDLA\_HWC4作为DLA输入格式时，有以下要求：
+当使用kDLA_HWC4作为DLA输入格式时，有以下要求：
 
 *   C必须为1、3或4。
 * 第一层必须是卷积层。
@@ -3730,7 +3733,7 @@ nsys profile -t cuda,nvtx,nvmedia,osrt --accelerator-trace=nvmedia  --show-outpu
 在移动平台上，GPU内存和CPU内存共享系统内存。在内存非常有限的设备上，如Nano，系统内存可能会因为大型网络而耗尽；即使所需的GPU内存小于系统内存。在这种情况下，增加系统交换空间的大小可以解决一些问题。下面是一个示例脚本：
 
 ```c++
-你是一名专业的翻译员。将其翻译为简体中文，不要修改任何现有的Markdown命令：echo "######alloc swap######"
+echo "######alloc swap######"
 if [ ! -e /swapfile ];then
     sudo fallocate -l 4G /swapfile
     sudo chmod 600 /swapfile
@@ -3738,6 +3741,7 @@ if [ ! -e /swapfile ];then
     sudo /bin/sh -c 'echo  "/swapfile \t none \t swap \t defaults \t 0 \t 0" >> /etc/fstab'
     sudo swapon -a
 fi
+```
 ### [13.2.性能测量的硬件/软件环境](#hw-sw-environ-perf-measure)
 
 性能测量受许多因素的影响，包括硬件环境差异，如机器的冷却能力，以及软件环境差异，如GPU时钟设置。本节总结了可能影响性能测量的几个因素。
@@ -3793,7 +3797,7 @@ fi
 默认情况下，trtexec工具会测量H2D/D2H数据传输的延迟，以告知用户TensorRT工作负载是否可能受到H2D/D2H复制的限制。然而，如果H2D/D2H复制影响GPU计算时间的稳定性，您可以添加\--noDataTransfers标志来禁用H2D/D2H传输，仅测量GPU执行部分的延迟。
 ### [13.2.6. TCC模式和WDDM模式](#tcc-mode-wddm-mode)
 
-在Windows机器上，有两种驱动模式：您可以将GPU配置为TCC模式和WDDM模式。可以通过调用sudo nvidia-smi -dm \[0|1\]命令来指定模式，但连接到显示器的GPU不应配置为TCC模式。有关TCC模式的更多信息和限制，请参阅[TCC模式文档](https://docs.nvidia.com/nsight-visual-studio-edition/reference/index.html#tesla-compute-cluster)。
+在Windows机器上，有两种驱动模式：您可以将GPU配置为TCC模式和WDDM模式。可以通过调用sudo nvidia-smi -dm [0|1]命令来指定模式，但连接到显示器的GPU不应配置为TCC模式。有关TCC模式的更多信息和限制，请参阅[TCC模式文档](https://docs.nvidia.com/nsight-visual-studio-edition/reference/index.html#tesla-compute-cluster)。
 
 在TCC模式下，GPU被配置为专注于计算工作，图形支持（如OpenGL或监视器显示）被禁用。这是运行TensorRT推理工作负载的推荐模式。另一方面，WDDM模式在使用TensorRT运行推理工作负载时往往会导致GPU性能较差且不稳定。
 
@@ -4068,7 +4072,7 @@ Q/DQ 节点帮助将 FP32 值转换为 INT8 值，反之亦然。这样的图仍
         QuantizeLinear
 ```
 
-（\[DQ，DQ\] > 节点 > Q）序列，则融合为量化节点（QNode）。
+（[DQ，DQ] > 节点 > Q）序列，则融合为量化节点（QNode）。
 
 支持权重的 Q/DQ 节点对要求加权节点支持多个输入。因此，我们支持添加第二个输入（用于权重张量）和第三个输入（用于偏置张量）。可以使用 setInput(index, tensor) API 为卷积、反卷积和全连接层设置额外的输入，其中 index = 2 表示权重张量，index = 3 表示偏置张量。
 
@@ -4714,14 +4718,14 @@ GPU计算时间
 *   –-memPoolSize=<pool\_spec>: 指定策略允许使用的工作空间的最大大小，以及DLA将为每个可加载项分配的内存池的大小。
 *   \--saveEngine=<file>: 指定要保存引擎的路径。
 *   \--fp16, \--int8, \--noTF32, \--best: 指定网络级精度。
-*   \--sparsity=\[disable|enable|force\]: 指定是否使用支持结构化稀疏性的策略。
+*   \--sparsity=[disable|enable|force]: 指定是否使用支持结构化稀疏性的策略。
     *   disable: 禁用所有使用结构化稀疏性的策略。这是默认设置。
     *   enable: 启用使用结构化稀疏性的策略。只有当ONNX文件中的权重满足结构化稀疏性的要求时，才会使用策略。
     *   force: 启用使用结构化稀疏性的策略，并允许trtexec覆盖ONNX文件中的权重，以强制其具有结构化稀疏性模式。请注意，这不保留准确性，仅用于获得推理性能。
 *   \--timingCacheFile=<file>: 指定要加载和保存的计时缓存文件。
 *   \--verbose: 打开详细日志记录。
 *   \--buildOnly: 仅构建并保存引擎，不运行推理。
-*   \--profilingVerbosity=\[layer\_names\_only|detailed|none\]: 指定构建引擎时的分析详细程度。
+*   \--profilingVerbosity=[layer_names_only|detailed|none]: 指定构建引擎时的分析详细程度。
 *   \--dumpLayerInfo, \--exportLayerInfo=<file>: 打印/保存引擎的层信息。
 *   \--precisionConstraints=spec: 控制精度约束设置。
     *   none: 没有约束。
