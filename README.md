@@ -87,7 +87,7 @@ TensorRT 使用经验。
 3. linux cpu c++编程能力，会写avx、会用mkl；
 4. 熟悉深度学习计算过程
 5. 学习能力强，实习时间长
-联系方式: leowgyang@tencent.com
+联系方式: lityangweiguang@163.com
 
   [1]: https://developer.nvidia.com/nvidia-tensorrt3rc-download
   [2]: https://developer.nvidia.com/nvidia-tensorrt-download
